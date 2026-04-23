@@ -1,0 +1,44 @@
+# Back4App Deployment Configuration
+version: "1.0"
+
+# Application name (will be created in Back4App)
+app: ligakit
+
+# Environment variables
+environment:
+  - name: NODE_ENV
+    value: production
+  - name: NEXTAUTH_SECRET
+    value: ${NEXTAUTH_SECRET}
+  - name: NEXTAUTH_URL
+    value: ${BACK4APP_APP_URL}
+  - name: DATABASE_URL
+    value: file:/app/data/dev.db
+  - name: NEXT_TELEMETRY_DISABLED
+    value: "1"
+
+# Health check configuration
+healthCheck:
+  path: /
+  port: 3000
+  initialDelaySeconds: 30
+  timeoutSeconds: 5
+
+# Persistent volumes for data
+volumes:
+  - name: data
+    mountPath: /app/data
+    size: 1Gi
+  - name: uploads
+    mountPath: /app/public/uploads
+    size: 1Gi
+
+# Container resources
+resources:
+  cpu: 0.5
+  memory: 512Mi
+
+# Port configuration
+ports:
+  - port: 3000
+    protocol: TCP
