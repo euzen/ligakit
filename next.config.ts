@@ -5,7 +5,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1", "localhost"],
-  output: 'standalone',
+  output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
   images: {
     unoptimized: true,
   },

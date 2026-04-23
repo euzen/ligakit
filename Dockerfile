@@ -19,7 +19,8 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
+# Build the application (standalone output for Docker)
+ENV DOCKER_BUILD=1
 RUN npm run build
 
 # Production image

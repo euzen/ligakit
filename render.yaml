@@ -7,7 +7,7 @@ services:
 
     buildCommand: npm ci && npx prisma generate && npm run build
 
-    startCommand: node scripts/migrate.mjs && node scripts/seed-admin.mjs && node .next/standalone/server.js
+    startCommand: node scripts/migrate.mjs && node scripts/seed-admin.mjs && npm run start
 
     healthCheckPath: /
 
