@@ -2,15 +2,18 @@ import path from "path";
 
 /**
  * Returns the base directory for file uploads.
- * In production (Docker) we write to /app/data/uploads so it survives
- * on a persistent volume and the nextjs user has write access.
- * In development we write to <cwd>/public/uploads (served statically).
+ *
+ * Priority:
+ *  1. UPLOAD_DIR env var  (set explicitly per platform)
+ *  2. production default  → /app/data/uploads  (Docker / Back4App)
+ *  3. development default → <cwd>/public/uploads
  */
 export function getUploadDir(...segments: string[]): string {
   const base =
-    process.env.NODE_ENV === "production"
+    process.env.UPLOAD_DIR ??
+    (process.env.NODE_ENV === "production"
       ? "/app/data/uploads"
-      : path.join(process.cwd(), "public", "uploads");
+      : path.join(process.cwd(), "public", "uploads"));
   return path.join(base, ...segments);
 }
 

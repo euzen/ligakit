@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: ligakit
+    runtime: node
+    region: frankfurt
+    plan: free
+
+    buildCommand: npm ci && npx prisma generate && npm run build
+
+    startCommand: node scripts/migrate.mjs && node scripts/seed-admin.mjs && node .next/standalone/server.js
+
+    healthCheckPath: /
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: PORT
+        value: "3000"
+      - key: HOSTNAME
+        value: "0.0.0.0"
+      - key: DATABASE_URL
+        value: file:/var/data/dev.db
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+      - key: AUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+
+    disk:
+      name: ligakit-data
+      mountPath: /var/data
+      sizeGB: 1

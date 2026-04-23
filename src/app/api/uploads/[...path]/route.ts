@@ -11,16 +11,18 @@ const MIME: Record<string, string> = {
   svg: "image/svg+xml",
 };
 
+const UPLOAD_BASE = process.env.UPLOAD_DIR ?? "/app/data/uploads";
+
 export async function GET(
   _: NextRequest,
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path: segments } = await params;
-  const filePath = path.join("/app/data/uploads", ...segments);
+  const filePath = path.join(UPLOAD_BASE, ...segments);
 
   // Prevent path traversal
   const resolved = path.resolve(filePath);
-  if (!resolved.startsWith("/app/data/uploads")) {
+  if (!resolved.startsWith(path.resolve(UPLOAD_BASE))) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
