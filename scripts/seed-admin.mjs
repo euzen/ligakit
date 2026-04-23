@@ -25,13 +25,16 @@ const name = process.env.ADMIN_NAME ?? "Admin";
 
 // bcrypt hash of "admin123456" with salt rounds 12
 // This is a fixed pre-computed hash — password is: admin123456
-const hashedPassword = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBKhGnQfJM5Wy2";
+const hashedPassword = "$2b$12$WSkLjffKC4aOLNdAhwgJNu4Vl9jgPMuHJSQ8ThmuVTXzc30ZnOfE.";
 
 const db = new Database(dbPath);
 
-const existing = db.prepare("SELECT id FROM User WHERE email = ?").get(email);
+const existing = db.prepare("SELECT id, password FROM User WHERE email = ?").get(email);
 if (existing) {
-  console.log(`Admin user ${email} already exists.`);
+  // Update password to ensure correct hash
+  db.prepare("UPDATE User SET password = ?, role = 'ADMINISTRATOR', updatedAt = datetime('now') WHERE email = ?")
+    .run(hashedPassword, email);
+  console.log(`Admin user ${email} updated.`);
   db.close();
   process.exit(0);
 }
