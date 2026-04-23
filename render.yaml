@@ -5,7 +5,7 @@ services:
     region: frankfurt
     plan: free
 
-    buildCommand: npm ci && npm rebuild better-sqlite3 && npx prisma generate && npm run build
+    buildCommand: npm rebuild better-sqlite3 && npx prisma generate && npm run build
 
     startCommand: node scripts/migrate.mjs && node scripts/seed-admin.mjs && npm run start
 
