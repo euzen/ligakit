@@ -2,7 +2,10 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import path from "path";
 
-const dbPath = path.resolve(process.cwd(), "prisma/dev.db");
+const dbUrl = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
+const dbPath = dbUrl.startsWith("file:")
+  ? path.resolve(dbUrl.replace(/^file:/, ""))
+  : path.resolve(process.cwd(), "prisma/dev.db");
 
 // Bump this string after every `prisma migrate dev` to bust the cached instance
 const SCHEMA_VERSION = "v6-bracket-pos";
