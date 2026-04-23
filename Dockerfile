@@ -47,8 +47,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/node_modules ./node_modules
 
-# Create directory for SQLite database (Back4App volume)
-RUN mkdir -p /app/data && chown nextjs:nodejs /app/data && chmod +x docker-entrypoint.sh
+# Create writable data directories and symlink uploads into standalone public
+RUN mkdir -p /app/data/uploads/teams /app/data/uploads/avatars /app/data/uploads/sports \
+    && mkdir -p /app/.next/standalone/public/uploads \
+    && chown -R nextjs:nodejs /app/data \
+    && chown -R nextjs:nodejs /app/.next/standalone/public \
+    && chmod +x docker-entrypoint.sh
 
 # Switch to non-root user
 USER nextjs

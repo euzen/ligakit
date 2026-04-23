@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { rateLimit } from "@/lib/rate-limit";
+import { getUploadDir, getUploadUrl } from "@/lib/upload-path";
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif", "image/svg+xml"];
 const MAX_SIZE = 2 * 1024 * 1024;
@@ -26,11 +27,11 @@ export async function POST(request: NextRequest) {
 
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "teams");
+  const uploadDir = getUploadDir("teams");
 
   await mkdir(uploadDir, { recursive: true });
   const bytes = await file.arrayBuffer();
   await writeFile(path.join(uploadDir, fileName), Buffer.from(bytes));
 
-  return NextResponse.json({ url: `/uploads/teams/${fileName}` }, { status: 201 });
+  return NextResponse.json({ url: getUploadUrl("teams", fileName) }, { status: 201 });
 }
