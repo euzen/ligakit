@@ -60,7 +60,7 @@ export default async function CompetitionsPage({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar locale={locale} />
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <Breadcrumbs items={[
             { label: locale === "cs" ? "Přehled" : "Dashboard", href: `/${locale}/dashboard` },

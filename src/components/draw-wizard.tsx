@@ -49,6 +49,7 @@ export function DrawWizard({
   const [numGroups, setNumGroups] = useState(2);
   const [groupDoubleLegs, setGroupDoubleLegs] = useState(false);
   const [clearExisting, setClearExisting] = useState(true);
+  const [thirdPlaceMatch, setThirdPlaceMatch] = useState(false);
 
   // CUP advancement options
   const [advancementPreset, setAdvancementPreset] = useState<CupAdvancementPreset>("WINNERS_ONLY");
@@ -102,6 +103,7 @@ export function DrawWizard({
           groupDoubleLegs,
           clearExisting,
           advancementConfig,
+          thirdPlaceMatch,
         }),
       });
       const data = await res.json();
@@ -295,17 +297,31 @@ export function DrawWizard({
                   checked={groupDoubleLegs}
                   onChange={setGroupDoubleLegs}
                 />
+                <ToggleRow
+                  id="thirdPlaceMatchCup"
+                  label={isCS ? "Zápas o 3. místo" : "3rd place match"}
+                  checked={thirdPlaceMatch}
+                  onChange={setThirdPlaceMatch}
+                />
               </div>
             )}
 
-            {/* TOURNAMENT info */}
+            {/* TOURNAMENT info + 3rd place toggle */}
             {competitionType === "TOURNAMENT" && (
-              <p className="text-sm text-muted-foreground">
-                {isCS
-                  ? `Vygeneruje se single-elimination pavouk. Pokud počet týmů není mocninou 2, přidají se volné postupy (bye).`
-                  : `Single-elimination bracket. If team count isn't a power of 2, byes are added automatically.`
-                }
-              </p>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  {isCS
+                    ? `Vygeneruje se single-elimination pavouk. Pokud počet týmů není mocninou 2, přidají se volné postupy (bye).`
+                    : `Single-elimination bracket. If team count isn't a power of 2, byes are added automatically.`
+                  }
+                </p>
+                <ToggleRow
+                  id="thirdPlaceMatch"
+                  label={isCS ? "Zápas o 3. místo" : "3rd place match"}
+                  checked={thirdPlaceMatch}
+                  onChange={setThirdPlaceMatch}
+                />
+              </div>
             )}
 
             {/* Clear existing */}

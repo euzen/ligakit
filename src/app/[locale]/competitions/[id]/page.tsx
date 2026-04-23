@@ -60,14 +60,57 @@ export default async function CompetitionDetailPage({
 
   if (!competition.isPublic && !canManage) notFound();
 
-  const [allTeams, myTeams, matchEvents] = await Promise.all([
+  const [allTeams, myTeams, matchEvents, rosterPlayers] = await Promise.all([
     prisma.team.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, logoUrl: true } }),
     prisma.team.findMany({ where: { ownerId: session.user.id }, orderBy: { name: "asc" }, select: { id: true, name: true, logoUrl: true } }),
     prisma.matchEvent.findMany({
       where: { match: { competitionId: id } },
       select: { type: true, teamSide: true, playerName: true, matchId: true },
     }),
+    prisma.player.findMany({
+      where: { team: { competitions: { some: { competitionId: id } } } },
+      select: { id: true, name: true, number: true, team: { select: { name: true } } },
+      orderBy: { name: "asc" },
+    }),
   ]);
+
+  const players = rosterPlayers.map(p => ({
+    id: p.id,
+    name: p.name,
+    number: p.number,
+    teamName: p.team.name,
+  }));
+
+  // Determine bracket podium for TOURNAMENT/CUP
+  let bracketWinner: string | null = null;
+  let bracketRunnerUp: string | null = null;
+  let bracketThird: string | null = null;
+
+  if (competition.type === "TOURNAMENT" || competition.type === "CUP") {
+    const bracketMatches = competition.matches.filter(m => m.bracketPos !== null && m.status === "PLAYED");
+    if (bracketMatches.length > 0) {
+      // Final = highest round, bracketPos 0
+      const maxRound = Math.max(...bracketMatches.map(m => m.round ?? 0));
+      const finalMatch = bracketMatches.find(m => m.round === maxRound && m.bracketPos === 0);
+      if (finalMatch && finalMatch.homeScore !== null && finalMatch.awayScore !== null) {
+        const homeWon = finalMatch.homeScore > finalMatch.awayScore;
+        bracketWinner = homeWon
+          ? (finalMatch.homeTeam?.name ?? finalMatch.homeTeamName)
+          : (finalMatch.awayTeam?.name ?? finalMatch.awayTeamName);
+        bracketRunnerUp = homeWon
+          ? (finalMatch.awayTeam?.name ?? finalMatch.awayTeamName)
+          : (finalMatch.homeTeam?.name ?? finalMatch.homeTeamName);
+      }
+      // 3rd place match: bracketPos === -1
+      const thirdMatch = bracketMatches.find(m => m.bracketPos === -1);
+      if (thirdMatch && thirdMatch.homeScore !== null && thirdMatch.awayScore !== null) {
+        const homeWon = thirdMatch.homeScore > thirdMatch.awayScore;
+        bracketThird = homeWon
+          ? (thirdMatch.homeTeam?.name ?? thirdMatch.homeTeamName)
+          : (thirdMatch.awayTeam?.name ?? thirdMatch.awayTeamName);
+      }
+    }
+  }
 
   const teamsForStandings = competition.teams.map((ct) => ({
     team: ct.team ?? { id: ct.guestName ?? ct.id, name: ct.guestName ?? "?", logoUrl: null },
@@ -251,7 +294,7 @@ export default async function CompetitionDetailPage({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar locale={locale} />
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <Breadcrumbs items={[
             { label: locale === "cs" ? "Přehled" : "Dashboard", href: `/${locale}/dashboard` },
@@ -346,6 +389,10 @@ export default async function CompetitionDetailPage({
             bracketSection={bracketSection}
             statsSection={statsSection}
             statusSection={statusSection}
+            bracketWinner={bracketWinner}
+            bracketRunnerUp={bracketRunnerUp}
+            bracketThird={bracketThird}
+            players={players}
           />
         </div>
       </main>

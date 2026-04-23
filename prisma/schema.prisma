@@ -149,6 +149,7 @@ model Competition {
   cupTeamsPerGroup        Int?     // 1, 2, or 3
   cupThirdPlaceAdvance    Int?     // number of best 3rd places advancing (0, 1, 2, 4)
   cupCustomPairings       String?  // JSON serialized custom pairings (for CUSTOM preset)
+  thirdPlaceMatch  Boolean  @default(false)  // generate 3rd place match for TOURNAMENT/CUP
 
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -157,6 +158,7 @@ model Competition {
   organizer  User              @relation(fields: [organizerId], references: [id], onDelete: Cascade)
   teams      CompetitionTeam[]
   matches    Match[]
+  awards     CompetitionAward[]
 }
 
 model CompetitionTeam {
@@ -246,6 +248,21 @@ model Player {
 
   team     Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   position Position? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  awards   CompetitionAward[]
+}
+
+model CompetitionAward {
+  id            String   @id @default(cuid())
+  competitionId String
+  title         String
+  recipientName String
+  icon          String?  // emoji or predefined icon key
+  playerId      String?  // optional — link to a Player record
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  player      Player?     @relation(fields: [playerId], references: [id], onDelete: SetNull)
 }
 
 model AuditLog {

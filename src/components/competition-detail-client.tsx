@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -11,6 +11,7 @@ import {
   Radio, ChevronRight,
 } from "lucide-react";
 import type { StandingRow, GroupStandings } from "@/lib/standings";
+import { CompetitionAwards } from "@/components/competition-awards";
 
 interface Match {
   id: string;
@@ -38,6 +39,13 @@ interface LiveMatch {
   awayTeamName: string | null;
 }
 
+interface TeamPlayer {
+  id: string;
+  name: string;
+  number: number | null;
+  teamName: string;
+}
+
 interface Props {
   locale: string;
   competitionId: string;
@@ -58,6 +66,10 @@ interface Props {
   bracketSection: React.ReactNode | null;
   statsSection: React.ReactNode;
   statusSection: React.ReactNode;
+  bracketWinner?: string | null;
+  bracketRunnerUp?: string | null;
+  bracketThird?: string | null;
+  players: TeamPlayer[];
 }
 
 const FORM_COLORS: Record<string, string> = {
@@ -83,6 +95,10 @@ export function CompetitionDetailClient({
   bracketSection,
   statsSection,
   statusSection,
+  bracketWinner,
+  bracketRunnerUp,
+  bracketThird,
+  players,
 }: Props) {
   const cs = locale === "cs";
 
@@ -92,10 +108,25 @@ export function CompetitionDetailClient({
     { id: "matches", label: cs ? "Zápasy" : "Matches" },
     { id: "teams", label: cs ? "Týmy" : "Teams" },
     { id: "stats", label: cs ? "Statistiky" : "Stats" },
+    { id: "awards", label: cs ? "Vyhlášení" : "Awards" },
   ].filter(Boolean) as { id: string; label: string }[];
 
   const defaultTab = standings || groupStandings ? "table" : (competitionType === "TOURNAMENT" || competitionType === "CUP") ? "bracket" : "matches";
-  const [activeTab, setActiveTab] = useState(defaultTab);
+
+  const validTabIds = tabs.map(t => t.id);
+  const getInitialTab = () => {
+    if (typeof window === "undefined") return defaultTab;
+    const hash = window.location.hash.replace("#", "");
+    return validTabIds.includes(hash) ? hash : defaultTab;
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (validTabIds.includes(hash)) setActiveTab(hash);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [statusValue, setStatusValue] = useState<string | null>(null);
   const [savingStatus, setSavingStatus] = useState(false);
@@ -185,11 +216,14 @@ export function CompetitionDetailClient({
       </div>
 
       {/* Tabs */}
-      <div className="border-b flex gap-0 overflow-x-auto">
+      <div className="border-b flex gap-0 flex-wrap">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              setActiveTab(tab.id);
+              window.history.replaceState(null, "", `#${tab.id}`);
+            }}
             className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors -mb-px ${
               activeTab === tab.id
                 ? "border-primary text-primary"
@@ -229,6 +263,22 @@ export function CompetitionDetailClient({
 
         {/* Stats tab */}
         {activeTab === "stats" && statsSection}
+
+        {/* Awards tab */}
+        {activeTab === "awards" && (
+          <CompetitionAwards
+            competitionId={competitionId}
+            competitionType={competitionType}
+            canManage={canManage}
+            locale={locale}
+            standings={standings}
+            groupStandings={groupStandings}
+            bracketWinner={bracketWinner}
+            bracketRunnerUp={bracketRunnerUp}
+            bracketThird={bracketThird}
+            players={players}
+          />
+        )}
       </div>
     </div>
   );

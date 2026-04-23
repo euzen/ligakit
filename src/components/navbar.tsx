@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Globe, LogOut, LayoutDashboard, Shield, Users, UserCircle, Trophy } from "lucide-react";
+import { Globe, LogOut, LayoutDashboard, Shield, Users, UserCircle, Trophy, BookOpen } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 interface NavbarProps {
@@ -48,6 +48,13 @@ export function Navbar({ locale }: NavbarProps) {
           </a>
 
           <div className="flex items-center gap-2">
+            <a
+              href={`/${locale}/docs`}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+            >
+              <BookOpen className="size-4" />
+              <span className="hidden sm:inline">{locale === "cs" ? "Docs" : "Docs"}</span>
+            </a>
             <a
               href={`/${otherLocale}${pathWithoutLocale}`}
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"

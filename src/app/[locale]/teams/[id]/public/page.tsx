@@ -60,7 +60,7 @@ export default async function PublicTeamPage({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-muted/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex items-start gap-6">
             {team.logoUrl ? (
               <img
@@ -102,7 +102,7 @@ export default async function PublicTeamPage({
       </div>
 
       {/* Roster */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between gap-2 flex-wrap">

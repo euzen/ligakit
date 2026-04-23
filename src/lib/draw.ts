@@ -212,10 +212,10 @@ const TBD: DrawSlot = { teamId: null, teamName: "TBD" };
 
 export function generateBracket(
   teams: DrawSlot[],
-  options: { roundOffset?: number } = {},
+  options: { roundOffset?: number; thirdPlaceMatch?: boolean } = {},
 ): GeneratedMatch[] {
   const shuffled = shuffle([...teams]);
-  const { roundOffset = 0 } = options;
+  const { roundOffset = 0, thirdPlaceMatch = false } = options;
 
   // Pad to next power of 2
   let size = 1;
@@ -257,6 +257,15 @@ export function generateBracket(
         });
       }
     }
+  }
+
+  // 3rd place match: same round as final, bracketPos = -1 (special sentinel)
+  if (thirdPlaceMatch && totalRounds >= 2) {
+    const finalRound = totalRounds + roundOffset;
+    results.push({
+      ...matchFromPair(TBD, TBD, finalRound, { stage: "3rd" }),
+      bracketPos: -1,
+    });
   }
 
   return results;
@@ -354,6 +363,7 @@ export function generateCup(
   options: {
     groupDoubleLegs?: boolean;
     advancementConfig?: CupAdvancementConfig;
+    thirdPlaceMatch?: boolean;
   } = {},
 ): GeneratedMatch[] {
   const shuffled = shuffle([...teams]);
@@ -388,6 +398,7 @@ export function generateCup(
 
   const bracketMatches = generateBracket(bracketSlots, {
     roundOffset: maxRoundInGroups,
+    thirdPlaceMatch: options.thirdPlaceMatch,
   });
   results.push(...bracketMatches);
 

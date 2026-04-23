@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Pencil, Trash2, Plus, Check, X, Loader2, Calendar, Tv } from "lucide-react";
+import { Trash2, Plus, Check, X, Loader2, Calendar, Tv } from "lucide-react";
 
 function toLocalDatetimeInput(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -217,7 +217,14 @@ export function CompetitionMatchesManager({
       setEditingId(null);
       toast.success(t("matchSaved"));
       // Handle bracket slot fill
-      if (bracketResult?.filled) {
+      if (bracketResult?.filled && bracketResult?.cupSlotsFilled) {
+        toast.success(
+          isCS
+            ? `Všechny skupiny odehrány — pavouk doplněn (${bracketResult.cupSlotsFilled} zápasů)`
+            : `All groups done — bracket filled (${bracketResult.cupSlotsFilled} matches)`,
+          { duration: 5000 },
+        );
+      } else if (bracketResult?.filled && bracketResult?.winner) {
         toast.success(
           isCS
             ? `${bracketResult.winner} postupuje do dalšího kola`
@@ -487,11 +494,17 @@ export function CompetitionMatchesManager({
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 min-w-0">
                           <span className="text-sm font-medium truncate">{resolveTeamName(m, "home")}</span>
-                          <div className="text-center shrink-0 px-2 flex flex-col items-center gap-0.5">
+                          <div
+                            className={`text-center shrink-0 px-2 flex flex-col items-center gap-0.5 rounded ${canManage ? "cursor-pointer hover:bg-muted transition-colors" : ""}`}
+                            onClick={() => canManage && startEdit(m)}
+                            title={canManage ? (isCS ? "Klikni pro úpravu výsledku" : "Click to edit result") : undefined}
+                          >
                             {m.homeScore !== null && m.awayScore !== null ? (
                               <span className="font-bold tabular-nums text-sm">{m.homeScore} : {m.awayScore}</span>
                             ) : (
-                              <span className="text-muted-foreground text-xs">vs</span>
+                              <span className={`text-xs ${canManage ? "text-primary/60 underline underline-offset-2 decoration-dashed" : "text-muted-foreground"}`}>
+                                {canManage ? (isCS ? "zadat" : "enter") : "vs"}
+                              </span>
                             )}
                             {m.scheduledAt && (
                               <span className="text-muted-foreground text-[10px] flex items-center gap-0.5 whitespace-nowrap">
@@ -501,12 +514,17 @@ export function CompetitionMatchesManager({
                           </div>
                           <span className="text-sm font-medium truncate text-right">{resolveTeamName(m, "away")}</span>
                         </div>
-                        <Badge variant={STATUS_VARIANTS[m.status]} className="text-[10px] shrink-0 hidden sm:flex">
+                        <Badge
+                          variant={STATUS_VARIANTS[m.status]}
+                          className={`text-[10px] shrink-0 hidden sm:flex ${canManage ? "cursor-pointer hover:opacity-70 transition-opacity" : ""}`}
+                          onClick={() => canManage && startEdit(m)}
+                          title={canManage ? (isCS ? "Klikni pro úpravu stavu" : "Click to edit status") : undefined}
+                        >
                           {t(`matchStatus${m.status}`)}
                         </Badge>
                         <div className="flex gap-1 shrink-0">
                           <a
-                            href={`/cs/matches/${m.id}/control`}
+                            href={`/${locale}/matches/${m.id}/control`}
                             target="_blank"
                             rel="noopener noreferrer"
                             title={isCS ? "Ovládat zápas" : "Control match"}
@@ -515,14 +533,9 @@ export function CompetitionMatchesManager({
                             <Tv className="size-3.5" />
                           </a>
                           {canManage && (
-                            <>
-                              <button onClick={() => startEdit(m)} className="inline-flex items-center justify-center size-7 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
-                                <Pencil className="size-3.5" />
-                              </button>
-                              <button onClick={() => setDeleteTarget(m.id)} className="inline-flex items-center justify-center size-7 rounded hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
-                                <Trash2 className="size-3.5" />
-                              </button>
-                            </>
+                            <button onClick={() => setDeleteTarget(m.id)} className="inline-flex items-center justify-center size-7 rounded hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
+                              <Trash2 className="size-3.5" />
+                            </button>
                           )}
                         </div>
                       </div>

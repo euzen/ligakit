@@ -41,6 +41,7 @@ export async function POST(
     groupDoubleLegs = false,
     clearExisting = false,
     advancementConfig,
+    thirdPlaceMatch = false,
   } = body;
 
   const slots: DrawSlot[] = competition.teams.map((ct) => ({
@@ -57,7 +58,8 @@ export async function POST(
   if (competition.type === "LEAGUE") {
     generatedMatches = generateRoundRobin(slots, { doubleLegs });
   } else if (competition.type === "TOURNAMENT") {
-    generatedMatches = generateBracket(slots);
+    generatedMatches = generateBracket(slots, { thirdPlaceMatch });
+    await prisma.competition.update({ where: { id }, data: { thirdPlaceMatch } });
   } else if (competition.type === "CUP") {
     const groups = Math.max(2, Math.min(numGroups, Math.floor(slots.length / 2)));
 
@@ -70,6 +72,7 @@ export async function POST(
     generatedMatches = generateCup(slots, groups, {
       groupDoubleLegs,
       advancementConfig: config,
+      thirdPlaceMatch,
     });
 
     // Store config in DB for this competition
@@ -80,6 +83,7 @@ export async function POST(
         cupTeamsPerGroup: config.teamsPerGroup,
         cupThirdPlaceAdvance: config.thirdPlaceAdvance ?? null,
         cupCustomPairings: config.customPairings ? JSON.stringify(config.customPairings) : null,
+        thirdPlaceMatch,
       },
     });
   } else {

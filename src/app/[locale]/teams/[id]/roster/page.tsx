@@ -52,7 +52,7 @@ export default async function RosterPage({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar locale={locale} />
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <Breadcrumbs items={[
             { label: isAdmin && !isOwner ? (locale === "cs" ? "Admin" : "Admin") : (locale === "cs" ? "Moje týmy" : "My Teams"), href: backHref },
