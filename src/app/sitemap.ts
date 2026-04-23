@@ -8,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const teams = await prisma.team.findMany({
     select: { id: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },
-  });
+  }).catch(() => []);
 
   const staticRoutes: MetadataRoute.Sitemap = LOCALES.flatMap((locale) => [
     {
