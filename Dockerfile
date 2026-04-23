@@ -34,9 +34,9 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files
-COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./.next/standalone
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/.next/static ./.next/standalone/.next/static
+COPY --from=builder /app/public ./.next/standalone/public
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/package.json ./package.json
