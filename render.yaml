@@ -1,13 +1,11 @@
 services:
   - type: web
     name: ligakit
-    runtime: node
+    runtime: docker
     region: frankfurt
     plan: free
 
-    buildCommand: npm rebuild better-sqlite3 && npx prisma generate && npm run build
-
-    startCommand: node scripts/migrate.mjs && node scripts/seed-admin.mjs && npm run start
+    dockerfilePath: ./Dockerfile
 
     healthCheckPath: /
 
@@ -16,10 +14,6 @@ services:
         value: production
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
-      - key: PORT
-        value: "3000"
-      - key: HOSTNAME
-        value: "0.0.0.0"
       - key: DATABASE_URL
         value: file:/var/data/dev.db
       - key: UPLOAD_DIR
