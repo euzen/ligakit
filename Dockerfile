@@ -30,10 +30,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Create user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
 # Copy necessary files
 COPY --from=builder /app/.next/standalone ./.next/standalone
 COPY --from=builder /app/.next/static ./.next/standalone/.next/static
@@ -48,15 +44,10 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/node_modules ./node_modules
 
-# Create writable data directories and symlink uploads into standalone public
+# Create writable directories for local data (overridden by volume mounts at runtime)
 RUN mkdir -p /app/data/uploads/teams /app/data/uploads/avatars /app/data/uploads/sports \
     && mkdir -p /app/.next/standalone/public/uploads \
-    && chown -R nextjs:nodejs /app/data \
-    && chown -R nextjs:nodejs /app/.next/standalone/public \
     && chmod +x docker-entrypoint.sh
-
-# Switch to non-root user
-USER nextjs
 
 # Expose port (Back4App uses PORT env variable)
 EXPOSE 3000
