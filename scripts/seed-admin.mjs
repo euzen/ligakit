@@ -29,12 +29,9 @@ const hashedPassword = "$2b$12$WSkLjffKC4aOLNdAhwgJNu4Vl9jgPMuHJSQ8ThmuVTXzc30Zn
 
 const db = new Database(dbPath);
 
-const existing = db.prepare("SELECT id, password FROM User WHERE email = ?").get(email);
+const existing = db.prepare("SELECT id FROM User WHERE email = ?").get(email);
 if (existing) {
-  // Update password to ensure correct hash
-  db.prepare("UPDATE User SET password = ?, role = 'ADMINISTRATOR', updatedAt = datetime('now') WHERE email = ?")
-    .run(hashedPassword, email);
-  console.log(`Admin user ${email} updated.`);
+  console.log(`Admin user ${email} already exists, skipping.`);
   db.close();
   process.exit(0);
 }

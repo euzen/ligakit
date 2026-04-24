@@ -26,11 +26,7 @@ const existing = await db.execute({
 });
 
 if (existing.rows.length > 0) {
-  await db.execute({
-    sql: "UPDATE User SET password = ?, role = 'ADMINISTRATOR', updatedAt = datetime('now') WHERE email = ?",
-    args: [hashedPassword, email],
-  });
-  console.log(`Admin user ${email} updated.`);
+  console.log(`Admin user ${email} already exists, skipping.`);
 } else {
   const id = "c" + Math.random().toString(36).slice(2, 26);
   await db.execute({
