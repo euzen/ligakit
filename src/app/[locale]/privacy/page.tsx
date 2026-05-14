@@ -7,8 +7,8 @@ export default function PrivacyPage() {
       <nav className="bg-white border-b border-slate-100 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center gap-2">
           <Link href="/" className="flex items-center gap-2">
-            <div className="bg-blue-700 p-1.5 rounded-lg">
-              <Trophy className="text-white" size={18} />
+            <div className="bg-blue-700 p-2 rounded-xl">
+              <Trophy className="text-white" size={24} />
             </div>
             <span className="text-xl font-bold tracking-tight">
               liga<span className="text-blue-700 font-light">kit</span>

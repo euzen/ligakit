@@ -11,7 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { UserMinus, UserPlus, Users, Globe, Lock, Loader2, ChevronUp, Link, Plus, Trash2, ClipboardList, Copy } from "lucide-react";
+import { UserMinus, UserPlus, Users, Globe, Lock, Loader2, ChevronUp, Link, Plus, Trash2, ClipboardList, Copy, CheckCircle2, Clock } from "lucide-react";
 
 interface Team { id: string; name: string; logoUrl: string | null }
 interface GuestPlayer {
@@ -312,21 +312,61 @@ export function CompetitionTeamsManager({
       )}
 
       {/* ── PUBLIC: team owner self-registers ── */}
-      {isPublic && !canManage && myTeamsNotIn.length > 0 && (
-        <div className="rounded-lg border border-dashed p-3 space-y-2">
-          <p className="text-xs font-medium">{isCS ? "Přihlásit svůj tým" : "Register your team"}</p>
-          <div className="flex gap-2">
-            <Select value={mySelectedTeamId} onValueChange={(v) => setMySelectedTeamId(v ?? "")}>
-              <SelectTrigger className="flex-1"><SelectValue placeholder={isCS ? "Vybrat tým..." : "Select team..."} /></SelectTrigger>
-              <SelectContent>
-                {myTeamsNotIn.map((team) => <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Button onClick={handleSelfRegister} disabled={!mySelectedTeamId || isRegistering} className="gap-1.5 shrink-0" type="button">
-              {isRegistering ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
-              {isCS ? "Přihlásit" : "Register"}
-            </Button>
+      {isPublic && !canManage && (
+        <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <UserPlus className="size-5 text-primary" />
+            <p className="font-semibold text-sm">{isCS ? "Přihlásit svůj tým do soutěže" : "Register your team"}</p>
           </div>
+
+          {/* Already registered teams */}
+          {myTeams.filter((t) => registeredTeamIds.has(t.id)).map((t) => {
+            const ct = teams.find((c) => c.teamId === t.id);
+            return (
+              <div key={t.id} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                ct?.isWaitlisted ? "bg-yellow-50 border border-yellow-200" : "bg-green-50 border border-green-200"
+              }`}>
+                {ct?.isWaitlisted
+                  ? <Clock className="size-4 text-yellow-600 shrink-0" />
+                  : <CheckCircle2 className="size-4 text-green-600 shrink-0" />}
+                <span className="font-medium">{t.name}</span>
+                <span className={`text-xs ml-auto ${
+                  ct?.isWaitlisted ? "text-yellow-700" : "text-green-700"
+                }`}>
+                  {ct?.isWaitlisted
+                    ? (isCS ? "Na čekací listině" : "On waitlist")
+                    : (isCS ? "Přihlášen" : "Registered")}
+                </span>
+                <button
+                  onClick={() => ct && setRemoveTarget(ct)}
+                  className="ml-1 text-muted-foreground hover:text-destructive transition-colors"
+                  title={isCS ? "Odhlásit" : "Unregister"}
+                >
+                  <UserMinus className="size-3.5" />
+                </button>
+              </div>
+            );
+          })}
+
+          {/* Register new team */}
+          {myTeamsNotIn.length > 0 ? (
+            <div className="flex gap-2">
+              <Select value={mySelectedTeamId} onValueChange={(v) => setMySelectedTeamId(v ?? "")}>
+                <SelectTrigger className="flex-1"><SelectValue placeholder={isCS ? "Vybrat tým..." : "Select team..."} /></SelectTrigger>
+                <SelectContent>
+                  {myTeamsNotIn.map((team) => <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleSelfRegister} disabled={!mySelectedTeamId || isRegistering} className="gap-1.5 shrink-0" type="button">
+                {isRegistering ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
+                {isCS ? "Přihlásit" : "Register"}
+              </Button>
+            </div>
+          ) : myTeams.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {isCS ? "Nemáš žádný tým. Nejprve si vytvoř tým." : "You have no teams. Create a team first."}
+            </p>
+          ) : null}
         </div>
       )}
 

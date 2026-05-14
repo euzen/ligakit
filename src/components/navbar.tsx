@@ -42,8 +42,8 @@ export function Navbar({ locale }: NavbarProps) {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <a href={`/${locale}`} className="flex items-center gap-2 group">
-            <div className="bg-blue-700 p-1.5 rounded-xl group-hover:rotate-6 transition-transform">
-              <Trophy className="text-white size-5" />
+            <div className="bg-blue-700 p-2 rounded-xl group-hover:rotate-6 transition-transform">
+              <Trophy className="text-white size-6" />
             </div>
             <span className="text-xl font-bold tracking-tight text-slate-900">
               liga<span className="text-blue-700 font-light">kit</span>

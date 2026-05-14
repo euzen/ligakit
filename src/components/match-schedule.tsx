@@ -96,6 +96,7 @@ export function MatchSchedule({ matches, locale }: MatchScheduleProps) {
   // Filter state
   const [filterRound, setFilterRound] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterTeam, setFilterTeam] = useState<string>("all");
 
   // Derive unique rounds for filter
   const allRounds = useMemo(
@@ -103,13 +104,28 @@ export function MatchSchedule({ matches, locale }: MatchScheduleProps) {
     [matches],
   );
 
+  // Derive unique team names for filter
+  const allTeams = useMemo(() => {
+    const names = new Set<string>();
+    for (const m of matches) {
+      names.add(m.homeTeam?.name ?? m.homeTeamName ?? "?");
+      names.add(m.awayTeam?.name ?? m.awayTeamName ?? "?");
+    }
+    return [...names].sort();
+  }, [matches]);
+
   const filtered = useMemo(() => {
     return matches.filter((m) => {
       if (filterRound !== "all" && String(m.round ?? 0) !== filterRound) return false;
       if (filterStatus !== "all" && m.status !== filterStatus) return false;
+      if (filterTeam !== "all") {
+        const home = m.homeTeam?.name ?? m.homeTeamName ?? "?";
+        const away = m.awayTeam?.name ?? m.awayTeamName ?? "?";
+        if (home !== filterTeam && away !== filterTeam) return false;
+      }
       return true;
     });
-  }, [matches, filterRound, filterStatus]);
+  }, [matches, filterRound, filterStatus, filterTeam]);
 
   // Group: matches with date → by calendar day; matches without date → separate bucket
   const { dayGroups, noDayMatches } = useMemo(() => {
@@ -176,9 +192,23 @@ export function MatchSchedule({ matches, locale }: MatchScheduleProps) {
           <option value="CANCELLED">{isCS ? "Zrušeno" : "Cancelled"}</option>
         </select>
 
-        {(filterRound !== "all" || filterStatus !== "all") && (
+        {/* Team filter */}
+        {allTeams.length > 1 && (
+          <select
+            value={filterTeam}
+            onChange={(e) => setFilterTeam(e.target.value)}
+            className="h-8 rounded-lg border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+          >
+            <option value="all">{isCS ? "Všechny týmy" : "All teams"}</option>
+            {allTeams.map((name) => (
+              <option key={name} value={name}>{name}</option>
+            ))}
+          </select>
+        )}
+
+        {(filterRound !== "all" || filterStatus !== "all" || filterTeam !== "all") && (
           <button
-            onClick={() => { setFilterRound("all"); setFilterStatus("all"); }}
+            onClick={() => { setFilterRound("all"); setFilterStatus("all"); setFilterTeam("all"); }}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             {isCS ? "Zrušit filtr" : "Clear filter"}

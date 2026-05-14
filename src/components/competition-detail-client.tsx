@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { StandingRow, GroupStandings } from "@/lib/standings";
 import { CompetitionAwards } from "@/components/competition-awards";
+import { CompetitionNoticeBoard } from "@/components/competition-notice-board";
 
 interface Match {
   id: string;
@@ -109,6 +110,7 @@ export function CompetitionDetailClient({
     { id: "teams", label: cs ? "Týmy" : "Teams" },
     { id: "stats", label: cs ? "Statistiky" : "Stats" },
     { id: "awards", label: cs ? "Vyhlášení" : "Awards" },
+    { id: "board", label: cs ? "Nástěnka" : "Notice board" },
   ].filter(Boolean) as { id: string; label: string }[];
 
   const defaultTab = standings || groupStandings ? "table" : (competitionType === "TOURNAMENT" || competitionType === "CUP") ? "bracket" : "matches";
@@ -269,6 +271,17 @@ export function CompetitionDetailClient({
 
         {/* Stats tab */}
         {activeTab === "stats" && statsSection}
+
+        {/* Notice board tab */}
+        {activeTab === "board" && (
+          <div className="pt-2">
+            <CompetitionNoticeBoard
+              competitionId={competitionId}
+              canManage={canManage}
+              locale={locale}
+            />
+          </div>
+        )}
 
         {/* Awards tab */}
         {activeTab === "awards" && (

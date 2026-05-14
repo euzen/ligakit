@@ -436,8 +436,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-12 mb-16">
           <div className="col-span-1 space-y-6">
             <div className="flex items-center gap-2">
-              <div className="bg-blue-700 p-1.5 rounded-lg">
-                <Trophy className="text-white" size={20} />
+              <div className="bg-blue-700 p-2 rounded-xl">
+                <Trophy className="text-white" size={24} />
               </div>
               <span className="text-xl font-bold tracking-tight">
                 liga<span className="text-blue-700 font-light">kit</span>

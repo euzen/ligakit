@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -204,10 +204,9 @@ export function DrawWizard({
                       {teams.map((t) => {
                         const key = t.id ?? t.name;
                         return (
-                          <>
-                            <span key={key + "-name"} className="text-sm truncate">{t.name}</span>
+                          <Fragment key={key}>
+                            <span className="text-sm truncate">{t.name}</span>
                             <input
-                              key={key + "-input"}
                               type="number"
                               min={1}
                               max={teamCount}
@@ -223,7 +222,7 @@ export function DrawWizard({
                               }}
                               className="w-full border rounded px-2 py-1 text-sm text-center tabular-nums bg-background"
                             />
-                          </>
+                          </Fragment>
                         );
                       })}
                     </div>

@@ -31,6 +31,7 @@ model User {
   sessions     Session[]
   teams        Team[]
   competitions Competition[]
+  competitionPosts CompetitionPost[]
 }
 
 model Account {
@@ -184,6 +185,19 @@ model Competition {
   teams      CompetitionTeam[]
   matches    Match[]
   awards     CompetitionAward[]
+  posts      CompetitionPost[]
+}
+
+model CompetitionPost {
+  id            String   @id @default(cuid())
+  competitionId String
+  authorId      String
+  body          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model CompetitionTeam {
