@@ -160,7 +160,6 @@ export default function ScoreboardPage() {
   const timerBox = dark ? "bg-white/5 border-white/10" : "bg-slate-100 border-slate-200";
   const eventRow = dark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200";
   const eventHighlight = dark ? "bg-blue-600/20 border-blue-500/40" : "bg-blue-50 border-blue-300";
-  const ownGoalRow = dark ? "bg-red-600/10 border-red-500/40" : "bg-red-50 border-red-300";
   const dividerColor = dark ? "text-slate-700" : "text-slate-300";
 
   return (
@@ -293,7 +292,7 @@ export default function ScoreboardPage() {
                 const label = eventLabel(ev.type);
                 const isSub = ev.type === "SUBSTITUTION";
                 const isOwnGoal = ev.type === "OWN_GOAL";
-                const rowCls = `flex items-center gap-1.5 px-2 py-1.5 rounded-lg border w-full ${isOwnGoal ? ownGoalRow : index === 0 ? eventHighlight : eventRow}`;
+                const rowCls = `flex items-center gap-1.5 px-2 py-1.5 rounded-lg border w-full ${index === 0 ? eventHighlight : eventRow}`;
 
                 const HomeCard = (
                   <div className={rowCls}>
