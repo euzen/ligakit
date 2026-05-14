@@ -13,7 +13,6 @@ import {
   Play,
   Clock,
   LayoutDashboard,
-  ShieldCheck,
   CheckCircle2,
   ChevronDown,
   Globe,
@@ -147,97 +146,104 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Live Center Card */}
+          {/* Live Center Card – mirrors actual scoreboard design */}
           <div className="relative">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl" />
-            <div className="bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden relative z-10">
-              {/* Header */}
-              <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="bg-orange-500 text-white px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
-                    Live
-                  </div>
-                  <span className="text-sm font-bold opacity-80">
-                    {isCS ? "Krajský přebor • 14. kolo" : "Regional League • Round 14"}
-                  </span>
-                </div>
-                <span className="text-xs font-mono font-bold text-orange-400">72&apos;</span>
-              </div>
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl" />
+            <div className="bg-slate-950 text-white rounded-[32px] shadow-2xl overflow-hidden relative z-10 flex flex-col gap-2 p-2">
 
-              {/* Score */}
-              <div className="px-10 pt-8 pb-6 flex items-center justify-between border-b border-slate-50">
-                <div className="text-center w-24">
-                  <div className="w-14 h-14 mx-auto bg-blue-50 rounded-2xl flex items-center justify-center mb-2">
-                    <ShieldCheck className="text-blue-700" size={28} />
+              {/* Top bar */}
+              <div className="flex justify-between items-center px-2 pt-1">
+                <div className="flex items-center gap-2">
+                  <div className="bg-blue-700 p-1.5 rounded-lg shadow-lg shadow-blue-500/20">
+                    <Trophy className="text-white" size={12} />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-tight">FK Slavoj</span>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-tighter leading-none">LIGAKIT</p>
+                    <p className="text-[8px] font-bold uppercase tracking-widest leading-none mt-0.5 text-slate-500">
+                      {isCS ? "Krajský přebor" : "Regional League"}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-6xl font-black tabular-nums tracking-tighter">2 : 1</div>
-                  <div className="mt-2 text-[10px] font-bold text-orange-500 uppercase tracking-widest bg-orange-50 px-3 py-1 rounded-full inline-block">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest italic text-slate-500">
                     {isCS ? "2. poločas" : "2nd half"}
+                  </span>
+                  <div className="flex items-center gap-1.5 bg-red-600/10 px-2 py-1 rounded-lg border border-red-600/20">
+                    <div className="relative flex h-1.5 w-1.5">
+                      <div className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <div className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600" />
+                    </div>
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-red-500">{isCS ? "Živě" : "Live"}</span>
                   </div>
-                </div>
-                <div className="text-center w-24">
-                  <div className="w-14 h-14 mx-auto bg-orange-50 rounded-2xl flex items-center justify-center mb-2">
-                    <Trophy className="text-orange-500" size={28} />
-                  </div>
-                  <span className="text-xs font-bold uppercase tracking-tight">SK Jiskra</span>
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="px-4 pt-3 pb-2 bg-slate-50 flex gap-2">
-                <button
-                  onClick={() => setActiveTab("match")}
-                  className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-lg transition-all ${
-                    activeTab === "match" ? "bg-white shadow-sm text-blue-700" : "text-slate-400 hover:text-slate-600"
-                  }`}
-                >
-                  {isCS ? "Zápas" : "Match"}
-                </button>
-                <button
-                  onClick={() => setActiveTab("events")}
-                  className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-lg transition-all ${
-                    activeTab === "events" ? "bg-white shadow-sm text-blue-700" : "text-slate-400 hover:text-slate-600"
-                  }`}
-                >
-                  {isCS ? "Události" : "Events"}
-                </button>
+              {/* Score section */}
+              <div className="rounded-2xl border border-white/5 bg-slate-900/50 flex items-center justify-around px-4 py-5 relative overflow-hidden">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[60%] bg-blue-600/10 blur-[60px] pointer-events-none" />
+                {/* Home */}
+                <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0 z-10">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center border bg-slate-800 border-white/5 shadow-lg">
+                    <Trophy size={28} className="text-blue-500 opacity-60" />
+                  </div>
+                  <h2 className="text-xs font-black uppercase italic tracking-tighter text-center leading-none">FK Slavoj</h2>
+                </div>
+                {/* Score */}
+                <div className="flex flex-col items-center gap-2 px-4 shrink-0 z-10">
+                  <div className="flex items-center gap-1 leading-none">
+                    <span className="text-5xl font-black tabular-nums tracking-tighter text-blue-500">2</span>
+                    <span className="text-3xl font-black text-slate-700">:</span>
+                    <span className="text-5xl font-black tabular-nums tracking-tighter text-white">1</span>
+                  </div>
+                  <div className="px-2.5 py-1 rounded-lg border flex items-center gap-1.5 bg-white/5 border-white/10">
+                    <Clock size={10} className="text-blue-500 shrink-0" />
+                    <span className="text-sm font-black tabular-nums tracking-widest italic">72:14</span>
+                  </div>
+                </div>
+                {/* Away */}
+                <div className="flex flex-col items-center gap-1.5 flex-1 min-w-0 z-10">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center border bg-slate-800 border-white/5 shadow-lg">
+                    <Trophy size={28} className="text-orange-500 opacity-60" />
+                  </div>
+                  <h2 className="text-xs font-black uppercase italic tracking-tighter text-center leading-none">SK Jiskra</h2>
+                </div>
               </div>
 
-              {/* Tab content */}
-              {activeTab === "match" ? (
-                <div className="px-6 pb-5 space-y-2 pt-2">
-                  {[
-                    { min: "23'", icon: "⚽", label: "Novák", side: "home" },
-                    { min: "41'", icon: "🟨", label: "Dvořák", side: "away" },
-                    { min: "67'", icon: "⚽", label: "Procházka", side: "home" },
-                    { min: "71'", icon: "⚽", label: "Horáček", side: "away" },
-                  ].map((ev, i) => (
-                    <div key={i} className={`flex items-center gap-2 text-xs ${ev.side === "home" ? "flex-row" : "flex-row-reverse"}`}>
-                      <span className="font-mono text-slate-400 w-8 shrink-0 text-center">{ev.min}</span>
-                      <span>{ev.icon}</span>
-                      <span className="font-medium text-slate-700">{ev.label}</span>
-                    </div>
-                  ))}
+              {/* Events section */}
+              <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-3 flex flex-col gap-1">
+                <div className="flex justify-between items-center mb-1 shrink-0">
+                  <h3 className="text-xs font-black uppercase italic flex items-center gap-1.5">
+                    <span>📋</span> {isCS ? "Průběh utkání" : "Match events"}
+                  </h3>
+                  <div className="bg-blue-600/10 px-2 py-0.5 rounded border border-blue-600/20 text-blue-500 text-[9px] font-black uppercase tracking-widest">
+                    Live Sync
+                  </div>
                 </div>
-              ) : (
-                <div className="px-6 pb-5 pt-2 space-y-2">
-                  {[
-                    { min: "1'", label: isCS ? "Zápas zahájen" : "Match started", color: "text-green-600" },
-                    { min: "23'", label: isCS ? "Gól — FK Slavoj (Novák)" : "Goal — FK Slavoj (Novák)", color: "text-blue-600" },
-                    { min: "45'", label: isCS ? "Konec 1. poločasu" : "Half-time", color: "text-slate-500" },
-                    { min: "67'", label: isCS ? "Gól — FK Slavoj (Procházka)" : "Goal — FK Slavoj (Procházka)", color: "text-blue-600" },
-                    { min: "71'", label: isCS ? "Gól — SK Jiskra (Horáček)" : "Goal — SK Jiskra (Horáček)", color: "text-orange-600" },
-                  ].map((ev, i) => (
-                    <div key={i} className="flex items-start gap-3 text-xs">
-                      <span className="font-mono text-slate-400 w-8 shrink-0">{ev.min}</span>
-                      <span className={`font-medium ${ev.color}`}>{ev.label}</span>
+                {[
+                  { min: "23'", emoji: "⚽", player: "Novák", side: "home" },
+                  { min: "41'", emoji: "🟨", player: "Dvořák", side: "away" },
+                  { min: "67'", emoji: "⚽", player: "Procházka", side: "home" },
+                  { min: "71'", emoji: "⚽", player: "Horáček", side: "away" },
+                ].map((ev, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_2rem_1fr] items-center gap-1">
+                    <div className={ev.side === "home" ? "" : "invisible"}>
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-right justify-end ${i === 0 ? "bg-blue-600/20 border-blue-500/40" : "bg-white/5 border-white/5"}`}>
+                        <p className="text-[10px] font-black uppercase italic tracking-tight truncate">{ev.player}</p>
+                        <span className="text-sm leading-none shrink-0">{ev.emoji}</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="flex items-center justify-center">
+                      <span className="text-[10px] font-black tabular-nums text-slate-500">{ev.min}</span>
+                    </div>
+                    <div className={ev.side === "away" ? "" : "invisible"}>
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border ${i === 0 ? "bg-blue-600/20 border-blue-500/40" : "bg-white/5 border-white/5"}`}>
+                        <span className="text-sm leading-none shrink-0">{ev.emoji}</span>
+                        <p className="text-[10px] font-black uppercase italic tracking-tight truncate">{ev.player}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Overlay badge */}
