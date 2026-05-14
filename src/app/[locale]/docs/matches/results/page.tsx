@@ -30,24 +30,35 @@ export default async function ResultsPage({
         {cs ? (
           <>
             <li>Otevři detail zápasu.</li>
-            <li>Klikni na <strong>Zadat výsledek</strong>.</li>
-            <li>Zadej skóre domácích a hostů.</li>
-            <li>Volitelně přidej události (góly, žluté karty...).</li>
-            <li>Ulož — tabulka se aktualizuje automaticky.</li>
+            <li>Klikni na <strong>Ovládání zápasu</strong>.</li>
+            <li>Zaznamenávej události (góly, karty...) — skóre se přepočítá automaticky.</li>
+            <li>Po skončení zápasu klikni na <strong>Ukončit zápas</strong>.</li>
+            <li>Tabulka soutěže se aktualizuje automaticky.</li>
           </>
         ) : (
           <>
             <li>Open the match detail.</li>
-            <li>Click <strong>Enter Result</strong>.</li>
-            <li>Enter the home and away score.</li>
-            <li>Optionally add events (goals, yellow cards...).</li>
-            <li>Save — standings update automatically.</li>
+            <li>Click <strong>Match Control</strong>.</li>
+            <li>Record events (goals, cards…) — the score recalculates automatically.</li>
+            <li>After the match ends, click <strong>End Match</strong>.</li>
+            <li>The competition standings update automatically.</li>
           </>
         )}
       </ol>
 
+      <h2>{cs ? "Přímé zadání skóre" : "Direct score entry"}</h2>
+      <p>
+        {cs
+          ? "Pokud nechceš zapisovat jednotlivé události, můžeš přejít přímo do ovládacího panelu, ukončit zápas a skóre zadat ručně přes editaci výsledku na stránce detailu zápasu."
+          : "If you don't want to record individual events, you can go directly to the control panel, end the match, and manually edit the result on the match detail page."}
+      </p>
+
       <h2>{cs ? "Sdílení odkazu pro rozhodčího" : "Sharing the Referee Link"}</h2>
-      <p>{cs ? "V detailu zápasu klikni na Sdílet odkaz pro rozhodčího. Zkopíruj odkaz a pošli jej rozhodčímu — nepotřebuje účet v LigaKit." : "In the match detail, click Share Referee Link. Copy the link and send it to the referee — they don't need a LigaKit account."}</p>
+      <p>
+        {cs
+          ? "V ovládacím panelu zápasu klikni na <strong>Sdílet odkaz pro rozhodčího</strong>. Rozhodčí přes tento odkaz vidí tlačítka pro zapisování událostí a nepotřebuje účet v LigaKit."
+          : "In the match control panel, click <strong>Share Referee Link</strong>. The referee can record events via this link and doesn't need a LigaKit account."}
+      </p>
     </article>
   );
 }

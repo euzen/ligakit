@@ -51,6 +51,7 @@ const getNav = (locale: string, cs: boolean) => [
     items: [
       { slug: "admin", label: cs ? "Přehled" : "Overview" },
       { slug: "admin/sports", label: cs ? "Správa sportů" : "Sports Management" },
+      { slug: "admin/configuration", label: cs ? "Konfigurace systému" : "System Configuration" },
     ],
   },
   {
