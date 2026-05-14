@@ -182,12 +182,12 @@ export function CompetitionDetailClient({
           <div className="flex items-center gap-2">
             {statusSection}
             <select
-              defaultValue=""
+              value={statusValue ?? ""}
               onChange={(e) => { if (e.target.value) handleStatusChange(e.target.value); }}
               disabled={savingStatus}
               className="h-8 rounded-lg border bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
             >
-              <option value="" disabled>{statusValue ? "" : (cs ? "Změnit stav…" : "Change status…")}</option>
+              <option value="" disabled>{cs ? "Změnit stav…" : "Change status…"}</option>
               <option value="DRAFT">{cs ? "Koncept" : "Draft"}</option>
               <option value="ACTIVE">{cs ? "Aktivní" : "Active"}</option>
               <option value="FINISHED">{cs ? "Ukončená" : "Finished"}</option>
