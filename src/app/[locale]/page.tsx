@@ -14,7 +14,6 @@ import {
   Clock,
   LayoutDashboard,
   CheckCircle2,
-  ChevronDown,
   Globe,
 } from "lucide-react";
 
@@ -362,55 +361,78 @@ export default function HomePage() {
           </div>
 
           <div className="bg-white p-4 rounded-[40px] shadow-2xl border border-slate-100 rotate-2">
-            <div className="bg-slate-50 rounded-[32px] p-8 space-y-8">
+            <div className="bg-slate-50 rounded-[32px] p-8 space-y-5">
               <div className="flex justify-between items-center">
-                <h3 className="font-bold">{isCS ? "Konfigurace Enginu" : "Engine Config"}</h3>
+                <h3 className="font-bold">{isCS ? "Nová soutěž" : "New competition"}</h3>
                 <Settings className="text-slate-300" />
               </div>
 
-              <div className="space-y-4">
-                <div className="p-4 bg-white rounded-2xl border border-slate-100 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white font-bold italic">
-                      F
-                    </div>
-                    <span className="font-bold">{isCS ? "Fotbal (Default)" : "Football (Default)"}</span>
+              <div className="space-y-3">
+                {/* Name */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+                    {isCS ? "Název" : "Name"}
+                  </label>
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-700">
+                    {isCS ? "Krajský přebor 2025" : "Regional League 2025"}
                   </div>
-                  <ChevronDown size={20} className="text-slate-300" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">
-                      {isCS ? "Poločasy" : "Halves"}
+                {/* Type */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+                    {isCS ? "Typ" : "Type"}
+                  </label>
+                  <div className="flex gap-2">
+                    {(isCS
+                      ? ["Liga", "Pohár", "Turnaj"]
+                      : ["League", "Cup", "Tournament"]
+                    ).map((label, i) => (
+                      <div
+                        key={label}
+                        className={`flex-1 py-2 rounded-xl border text-xs font-bold text-center transition-colors ${
+                          i === 0
+                            ? "bg-blue-700 text-white border-blue-700"
+                            : "bg-white text-slate-400 border-slate-200"
+                        }`}
+                      >
+                        {label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Visibility */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+                    {isCS ? "Viditelnost" : "Visibility"}
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="flex-1 py-2 rounded-xl border text-xs font-bold text-center bg-blue-700 text-white border-blue-700 flex items-center justify-center gap-1.5">
+                      <Globe size={12} /> {isCS ? "Veřejný" : "Public"}
+                    </div>
+                    <div className="flex-1 py-2 rounded-xl border text-xs font-bold text-center bg-white text-slate-400 border-slate-200">
+                      {isCS ? "Soukromý" : "Private"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Period settings */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+                      {isCS ? "Počet částí" : "Periods"}
                     </label>
-                    <div className="p-4 bg-white rounded-2xl border border-slate-100 font-bold text-center">
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 font-bold text-center text-sm">
                       2
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">
-                      {isCS ? "Minuty" : "Minutes"}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+                      {isCS ? "Délka (min)" : "Duration (min)"}
                     </label>
-                    <div className="p-4 bg-white rounded-2xl border border-slate-100 font-bold text-center text-blue-700">
+                    <div className="p-3 bg-white rounded-xl border border-slate-200 font-bold text-center text-sm text-blue-700">
                       45
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">
-                    {isCS ? "Bodování (V/R/P)" : "Points (W/D/L)"}
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="flex-1 p-4 bg-white rounded-2xl border border-slate-100 font-bold text-center">
-                      3
-                    </div>
-                    <div className="flex-1 p-4 bg-white rounded-2xl border border-slate-100 font-bold text-center">
-                      1
-                    </div>
-                    <div className="flex-1 p-4 bg-white rounded-2xl border border-slate-100 font-bold text-center">
-                      0
                     </div>
                   </div>
                 </div>
