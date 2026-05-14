@@ -1,6 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -13,16 +12,17 @@ export default async function CompetitionsPage({
 }) {
   const { locale } = await params;
   const session = await auth();
-  if (!session) redirect(`/${locale}/login`);
 
   const t = await getTranslations("competitions");
-  const isAdmin = session.user.role === "ADMINISTRATOR";
-  const userId = session.user.id;
+  const isAdmin = session?.user.role === "ADMINISTRATOR";
+  const userId = session?.user.id ?? null;
 
   const competitions = await prisma.competition.findMany({
     where: isAdmin
       ? undefined
-      : { OR: [{ isPublic: true }, { organizerId: userId }] },
+      : userId
+        ? { OR: [{ isPublic: true }, { organizerId: userId }] }
+        : { isPublic: true },
     orderBy: { createdAt: "desc" },
     include: {
       sport: { select: { name: true, icon: true } },
@@ -50,7 +50,7 @@ export default async function CompetitionsPage({
     matchCount: c._count.matches,
     playedCount: c.matches.filter((m) => m.status === "PLAYED").length,
     hasLive: c.matches.some((m) => m.matchState === "LIVE"),
-    isOwn: c.organizer.id === userId,
+    isOwn: userId ? c.organizer.id === userId : false,
   }));
 
   const sports = [...new Map(

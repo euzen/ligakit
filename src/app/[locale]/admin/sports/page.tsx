@@ -6,16 +6,13 @@ import { Navbar } from "@/components/navbar";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Dumbbell, Tag } from "lucide-react";
-import { SportManager } from "@/components/sport-manager";
-import { PositionManager } from "@/components/position-manager";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { Dumbbell, Trophy, Users, ArrowRight, Plus } from "lucide-react";
+import { SportsDocs } from "@/components/sports-docs";
+
 
 export default async function AdminSportsPage({
   params,
@@ -29,16 +26,13 @@ export default async function AdminSportsPage({
   if (session.user.role !== "ADMINISTRATOR") redirect(`/${locale}/dashboard`);
 
   const t = await getTranslations("sports");
+  const cs = locale === "cs";
 
   const sports = await prisma.sport.findMany({
     orderBy: { name: "asc" },
     include: {
-      _count: { select: { teams: true } },
-      positions: {
-        orderBy: { name: "asc" },
-        include: { _count: { select: { players: true } } },
-      },
-    },
+      _count: { select: { teams: true, competitions: true } }
+    }
   });
 
   return (
@@ -47,74 +41,89 @@ export default async function AdminSportsPage({
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <Breadcrumbs items={[
-            { label: locale === "cs" ? "Administrace" : "Admin", href: `/${locale}/admin` },
-            { label: locale === "cs" ? "Číselník sportů" : "Sports Registry" },
+            { label: cs ? "Administrace" : "Admin", href: `/${locale}/admin` },
+            { label: cs ? "Správa sportů" : "Sports Management" },
           ]} />
 
-          <div className="flex items-start justify-between">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
                 <Dumbbell className="size-7" />
-                {t("title")}
+                {cs ? "Správa sportů" : "Sports Management"}
               </h1>
-              <p className="text-muted-foreground mt-1">{t("subtitle")}</p>
+              <p className="text-muted-foreground mt-1">
+                {cs 
+                  ? "Konfigurace sportů, událostí a výchozích pravidel" 
+                  : "Configure sports, events and default rules"}
+              </p>
             </div>
-            <Badge variant="secondary" className="text-sm">
-              {t("totalSports")}: {sports.length}
-            </Badge>
+            <a href={`/${locale}/admin/sports/new`} className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+              <Plus className="size-4" />
+              {cs ? "Přidat sport" : "Add sport"}
+            </a>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Left: sport management */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("addSport")}</CardTitle>
-                <CardDescription>{t("subtitle")}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <SportManager locale={locale} sports={sports} />
-              </CardContent>
-            </Card>
+          <SportsDocs locale={locale} />
 
-            {/* Right: positions per sport */}
-            <div className="space-y-4">
-              {sports.length === 0 ? (
-                <Card>
-                  <CardContent className="py-10 text-center text-muted-foreground text-sm">
-                    {locale === "cs" ? "Nejdříve přidejte sport." : "Add a sport first."}
+          {/* Sports Grid */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {sports.map((sport) => (
+              <a
+                key={sport.id}
+                href={`/${locale}/admin/sports/${sport.id}`}
+                className="group block"
+              >
+                <Card className="h-full transition-all hover:shadow-md hover:border-primary/50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          {sport.icon ? (
+                            <img src={sport.icon} alt={sport.name} className="size-6 object-cover rounded" />
+                          ) : (
+                            <Dumbbell className="size-5 text-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                            {sport.name}
+                          </CardTitle>
+                        </div>
+                      </div>
+                      <ArrowRight className="size-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Trophy className="size-4" />
+                        {sport._count.competitions}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Users className="size-4" />
+                        {sport._count.teams}
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
-              ) : (
-                sports.map((sport) => (
-                  <Card key={sport.id}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        {sport.icon ? (
-                          <img src={sport.icon} alt={sport.name} className="size-5 object-cover rounded-sm" />
-                        ) : (
-                          <Dumbbell className="size-4 text-muted-foreground" />
-                        )}
-                        {sport.name}
-                        <Badge variant="outline" className="ml-auto text-xs">
-                          <Tag className="size-3 mr-1" />
-                          {sport.positions.length} {t("positions")}
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription>{t("positionsTitle")}</CardDescription>
-                    </CardHeader>
-                    <Separator />
-                    <CardContent className="pt-4">
-                      <PositionManager
-                        sportId={sport.id}
-                        locale={locale}
-                        initialPositions={sport.positions}
-                      />
-                    </CardContent>
-                  </Card>
-                ))
-              )}
-            </div>
+              </a>
+            ))}
           </div>
+
+          {sports.length === 0 && (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Dumbbell className="size-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  {cs ? "Zatím nemáte žádné sporty" : "No sports yet"}
+                </p>
+                <a href={`/${locale}/admin/sports/new`} className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+                  <Plus className="size-4" />
+                  {cs ? "Vytvořit první sport" : "Create first sport"}
+                </a>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>

@@ -43,18 +43,22 @@ async function fillBracketSlot(
     return { filled: false, drawWarning: `${homeName} vs ${awayName}` };
   }
 
-  // Determine winner
+  // Determine winner and loser
   const winnerIsHome = m.homeScore > m.awayScore;
-  const winnerId = winnerIsHome ? m.homeTeamId : m.awayTeamId;
+  const winnerId   = winnerIsHome ? m.homeTeamId   : m.awayTeamId;
   const winnerName = winnerIsHome
     ? (m.homeTeam?.name ?? m.homeTeamName ?? "?")
     : (m.awayTeam?.name ?? m.awayTeamName ?? "?");
+  const loserId   = winnerIsHome ? m.awayTeamId   : m.homeTeamId;
+  const loserName = winnerIsHome
+    ? (m.awayTeam?.name ?? m.awayTeamName ?? "?")
+    : (m.homeTeam?.name ?? m.homeTeamName ?? "?");
 
-  const nextRound = m.round + 1;
-  const nextPos = Math.floor(m.bracketPos / 2);
+  const nextRound  = m.round + 1;
+  const nextPos    = Math.floor(m.bracketPos / 2);
   const isHomeSlot = m.bracketPos % 2 === 0;
 
-  // Find the next-round match
+  // Find the next-round match for the winner
   const nextMatch = await prisma.match.findFirst({
     where: { competitionId, round: nextRound, bracketPos: nextPos },
   });
@@ -64,19 +68,26 @@ async function fillBracketSlot(
     return { filled: false, isFinal: true, winner: winnerName };
   }
 
-  // Update the correct slot
+  // Update the winner slot
   await prisma.match.update({
     where: { id: nextMatch.id },
     data: isHomeSlot
-      ? {
-          homeTeamId: winnerId ?? null,
-          homeTeamName: winnerId ? null : winnerName,
-        }
-      : {
-          awayTeamId: winnerId ?? null,
-          awayTeamName: winnerId ? null : winnerName,
-        },
+      ? { homeTeamId: winnerId ?? null, homeTeamName: winnerId ? null : winnerName }
+      : { awayTeamId: winnerId ?? null, awayTeamName: winnerId ? null : winnerName },
   });
+
+  // Fill loser into 3rd place match (bracketPos = -1) if it exists
+  const thirdMatch = await prisma.match.findFirst({
+    where: { competitionId, round: nextRound, bracketPos: -1 },
+  });
+  if (thirdMatch) {
+    await prisma.match.update({
+      where: { id: thirdMatch.id },
+      data: isHomeSlot
+        ? { homeTeamId: loserId ?? null, homeTeamName: loserId ? null : loserName }
+        : { awayTeamId: loserId ?? null, awayTeamName: loserId ? null : loserName },
+    });
+  }
 
   return { filled: true, nextRound, nextPos, winner: winnerName };
 }

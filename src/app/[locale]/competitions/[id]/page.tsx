@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompetitionTeamsManager } from "@/components/competition-teams-manager";
 import { CompetitionMatchesManager } from "@/components/competition-matches-manager";
+import { MatchSchedule } from "@/components/match-schedule";
 import { CompetitionDetailClient } from "@/components/competition-detail-client";
 import { CompetitionStatsSection, type CompetitionStats } from "@/components/competition-stats-section";
 import { DrawWizard } from "@/components/draw-wizard";
@@ -29,7 +30,6 @@ export default async function CompetitionDetailPage({
 }) {
   const { locale, id } = await params;
   const session = await auth();
-  if (!session) redirect(`/${locale}/login`);
 
   const t = await getTranslations("competitions");
 
@@ -54,15 +54,15 @@ export default async function CompetitionDetailPage({
 
   if (!competition) notFound();
 
-  const isAdmin = session.user.role === "ADMINISTRATOR";
-  const isOrganizer = competition.organizerId === session.user.id;
+  const isAdmin = session?.user.role === "ADMINISTRATOR";
+  const isOrganizer = session ? competition.organizerId === session.user.id : false;
   const canManage = isAdmin || isOrganizer;
 
   if (!competition.isPublic && !canManage) notFound();
 
   const [allTeams, myTeams, matchEvents, rosterPlayers] = await Promise.all([
-    prisma.team.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, logoUrl: true } }),
-    prisma.team.findMany({ where: { ownerId: session.user.id }, orderBy: { name: "asc" }, select: { id: true, name: true, logoUrl: true } }),
+    canManage ? prisma.team.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, logoUrl: true } }) : Promise.resolve([]),
+    session ? prisma.team.findMany({ where: { ownerId: session.user.id }, orderBy: { name: "asc" }, select: { id: true, name: true, logoUrl: true } }) : Promise.resolve([]),
     prisma.matchEvent.findMany({
       where: { match: { competitionId: id } },
       select: { type: true, teamSide: true, playerName: true, matchId: true },
@@ -231,15 +231,22 @@ export default async function CompetitionDetailPage({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <CompetitionMatchesManager
-          competitionId={id}
-          initialMatches={competition.matches as Parameters<typeof CompetitionMatchesManager>[0]["initialMatches"]}
-          teams={matchTeams}
-          guestTeamNames={guestTeamNames}
-          canManage={canManage}
-          isTournament={competition.type === "TOURNAMENT"}
-          locale={locale}
-        />
+        {canManage ? (
+          <CompetitionMatchesManager
+            competitionId={id}
+            initialMatches={competition.matches as Parameters<typeof CompetitionMatchesManager>[0]["initialMatches"]}
+            teams={matchTeams}
+            guestTeamNames={guestTeamNames}
+            canManage={canManage}
+            isTournament={competition.type === "TOURNAMENT"}
+            locale={locale}
+          />
+        ) : (
+          <MatchSchedule
+            matches={competition.matches as Parameters<typeof MatchSchedule>[0]["matches"]}
+            locale={locale}
+          />
+        )}
       </CardContent>
     </Card>
   );
@@ -306,9 +313,11 @@ export default async function CompetitionDetailPage({
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="p-3 rounded-2xl bg-primary/10 shrink-0">
-                {competition.sport?.icon
-                  ? <img src={competition.sport.icon} alt="" className="size-7 object-cover rounded-lg" />
-                  : <Trophy className="size-7 text-primary" />}
+                {competition.logoUrl
+                  ? <img src={competition.logoUrl} alt="" className="size-7 object-contain rounded-lg" />
+                  : competition.sport?.icon
+                    ? <img src={competition.sport.icon} alt="" className="size-7 object-cover rounded-lg" />
+                    : <Trophy className="size-7 text-primary" />}
               </div>
               <div className="space-y-1.5">
                 <h1 className="text-3xl font-bold tracking-tight">{competition.name}</h1>
@@ -354,6 +363,14 @@ export default async function CompetitionDetailPage({
                 standings={exportStandings}
                 locale={locale}
               />
+              {!session && (
+                <a
+                  href={`/${locale}/login`}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border text-sm text-muted-foreground hover:bg-muted transition-colors"
+                >
+                  {locale === "cs" ? "Přihlásit se" : "Sign in"}
+                </a>
+              )}
               {canManage && (
                 <>
                   <DrawWizard

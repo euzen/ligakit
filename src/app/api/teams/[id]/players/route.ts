@@ -24,7 +24,7 @@ export async function GET(
   const players = await prisma.player.findMany({
     where: { teamId },
     orderBy: [{ number: "asc" }, { name: "asc" }],
-    include: { position: { select: { id: true, name: true } } },
+    include: { position: { select: { id: true, name: true, labelCs: true, labelEn: true } } },
   });
   return NextResponse.json(players);
 }
@@ -51,7 +51,7 @@ export async function POST(
       positionId: positionId || null,
       teamId,
     },
-    include: { position: { select: { id: true, name: true } } },
+    include: { position: { select: { id: true, name: true, labelCs: true, labelEn: true } } },
   });
   return NextResponse.json(player, { status: 201 });
 }

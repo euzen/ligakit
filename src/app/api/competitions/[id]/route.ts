@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const session = await auth();
   if (!await canManageCompetition(session, id)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { name, description, type, status, isPublic, sportId, startDate, endDate, periodCount, periodDuration, maxTeams, allowWaitlist } = await request.json();
+  const { name, description, type, status, isPublic, sportId, startDate, endDate, periodCount, periodDuration, maxTeams, allowWaitlist, logoUrl } = await request.json();
   if (name !== undefined && !name?.trim()) return NextResponse.json({ error: "NAME_REQUIRED" }, { status: 400 });
 
   const competition = await prisma.competition.update({
@@ -50,6 +50,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       ...(periodDuration !== undefined && { periodDuration: periodDuration ? Number(periodDuration) : null }),
       ...(maxTeams !== undefined && { maxTeams: maxTeams ? Number(maxTeams) : null }),
       ...(allowWaitlist !== undefined && { allowWaitlist: Boolean(allowWaitlist) }),
+      ...(logoUrl !== undefined && { logoUrl: logoUrl || null }),
     },
   });
   return NextResponse.json(competition);

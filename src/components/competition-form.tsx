@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Loader2, ArrowLeft, Lock, Globe } from "lucide-react";
+import { Loader2, ArrowLeft, Lock, Globe, ImagePlus, X } from "lucide-react";
 
 interface Sport { id: string; name: string; icon: string | null }
 
@@ -36,6 +36,7 @@ interface CompetitionFormProps {
     periodDuration?: number | null;
     maxTeams?: number | null;
     allowWaitlist?: boolean;
+    logoUrl?: string | null;
   };
   backHref: string;
 }
@@ -72,6 +73,28 @@ export function CompetitionForm({
   const router = useRouter();
   const isEdit = !!competitionId;
   const [serverError, setServerError] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string>(initialValues?.logoUrl ?? "");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/competitions/upload", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        setLogoUrl(data.url);
+      } else {
+        toast.error(locale === "cs" ? "Nahrání loga selhalo" : "Logo upload failed");
+      }
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -112,6 +135,7 @@ export function CompetitionForm({
         periodDuration: values.periodDuration ? Number(values.periodDuration) : null,
         maxTeams: values.maxTeams ? Number(values.maxTeams) : null,
         allowWaitlist: values.allowWaitlist,
+        logoUrl: logoUrl || null,
       }),
     });
 
@@ -143,6 +167,31 @@ export function CompetitionForm({
             {serverError && (
               <p className="text-sm text-destructive">{serverError}</p>
             )}
+
+            {/* Logo */}
+            <div className="space-y-1.5">
+              <Label>{locale === "cs" ? "Logo soutěže" : "Competition logo"}</Label>
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 rounded-xl border bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                  {logoUrl
+                    ? <img src={logoUrl} alt="logo" className="w-full h-full object-contain" />
+                    : <ImagePlus className="size-6 text-muted-foreground" />}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border bg-background text-sm font-medium cursor-pointer hover:bg-muted transition-colors">
+                    {uploadingLogo ? <Loader2 className="size-3.5 animate-spin" /> : <ImagePlus className="size-3.5" />}
+                    {locale === "cs" ? "Nahrát logo" : "Upload logo"}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                  </label>
+                  {logoUrl && (
+                    <button type="button" onClick={() => setLogoUrl("")} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors">
+                      <X className="size-3" />
+                      {locale === "cs" ? "Odebrat" : "Remove"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* Name */}
             <div className="space-y-1.5">

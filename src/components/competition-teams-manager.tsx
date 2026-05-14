@@ -11,7 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { UserMinus, UserPlus, Users, Globe, Lock, Loader2, ChevronUp, Link, Plus, Trash2, ClipboardList } from "lucide-react";
+import { UserMinus, UserPlus, Users, Globe, Lock, Loader2, ChevronUp, Link, Plus, Trash2, ClipboardList, Copy } from "lucide-react";
 
 interface Team { id: string; name: string; logoUrl: string | null }
 interface GuestPlayer {
@@ -82,6 +82,29 @@ export function CompetitionTeamsManager({
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [deletingPlayerId, setDeletingPlayerId] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [copyingRosterFor, setCopyingRosterFor] = useState<string | null>(null);
+
+  // Registered team roster (read-only)
+  const [expandedTeamRoster, setExpandedTeamRoster] = useState<string | null>(null);
+  const [teamRosterPlayers, setTeamRosterPlayers] = useState<Record<string, { id: string; name: string; number: number | null; position: { name: string; labelCs: string; labelEn: string } | null }[]>>({});
+  const [teamRosterLoading, setTeamRosterLoading] = useState<string | null>(null);
+
+  const loadTeamRoster = async (ct: CompetitionTeam) => {
+    if (!ct.teamId) return;
+    if (expandedTeamRoster === ct.id) { setExpandedTeamRoster(null); return; }
+    setExpandedTeamRoster(ct.id);
+    if (teamRosterPlayers[ct.id]) return;
+    setTeamRosterLoading(ct.id);
+    try {
+      const res = await fetch(`/api/teams/${ct.teamId}/players`);
+      if (res.ok) {
+        const data = await res.json();
+        setTeamRosterPlayers((prev) => ({ ...prev, [ct.id]: data }));
+      }
+    } finally {
+      setTeamRosterLoading(null);
+    }
+  };
 
   const loadRoster = async (ct: CompetitionTeam) => {
     if (expandedRoster === ct.id) { setExpandedRoster(null); return; }
@@ -340,6 +363,18 @@ export function CompetitionTeamsManager({
                   <Badge variant="outline" className="text-xs hidden sm:inline-flex">
                     {new Date(ct.joinedAt).toLocaleDateString()}
                   </Badge>
+                  {/* Registered team roster toggle */}
+                  {ct.teamId && (
+                    <button
+                      onClick={() => loadTeamRoster(ct)}
+                      title={isCS ? "Soupiska týmu" : "Team roster"}
+                      className="inline-flex items-center justify-center size-7 rounded-md hover:bg-muted text-muted-foreground transition-colors"
+                    >
+                      {expandedTeamRoster === ct.id
+                        ? <ChevronUp className="size-3.5" />
+                        : <ClipboardList className="size-3.5" />}
+                    </button>
+                  )}
                   {/* Guest roster actions */}
                   {canManage && !ct.teamId && (
                     <>
@@ -375,6 +410,38 @@ export function CompetitionTeamsManager({
                   )}
                 </div>
 
+                {/* Expanded registered team roster (read-only) */}
+                {expandedTeamRoster === ct.id && ct.teamId && (
+                  <div className="border-t bg-muted/30 px-3 py-3">
+                    {teamRosterLoading === ct.id ? (
+                      <div className="flex justify-center py-3">
+                        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (teamRosterPlayers[ct.id] ?? []).length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-2">
+                        {isCS ? "Soupiska je prázdná" : "Roster is empty"}
+                      </p>
+                    ) : (
+                      <ul className="space-y-1">
+                        {(teamRosterPlayers[ct.id] ?? [])
+                          .map((p) => (
+                            <li key={p.id} className="flex items-center gap-2 text-sm">
+                              <span className="w-6 text-right tabular-nums text-muted-foreground text-xs shrink-0 font-mono">
+                                {p.number != null ? `#${p.number}` : ""}
+                              </span>
+                              <span className="flex-1 font-medium">{p.name}</span>
+                              {p.position && (
+                                <span className="text-xs text-muted-foreground">
+                                  {(isCS ? p.position.labelCs : p.position.labelEn) || p.position.name}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {/* Expanded guest roster */}
                 {expandedRoster === ct.id && canManage && !ct.teamId && (
                   <div className="border-t bg-muted/30 px-3 py-3 space-y-3">
@@ -403,6 +470,50 @@ export function CompetitionTeamsManager({
                         {addingPlayer ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
                       </button>
                     </div>
+
+                    {/* Copy roster from another guest team */}
+                    {teams.filter((t) => t.id !== ct.id && !t.teamId).length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="flex-1 h-8 rounded-md border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring text-muted-foreground"
+                          defaultValue=""
+                          id={`copy-source-${ct.id}`}
+                        >
+                          <option value="" disabled>{isCS ? "Kopírovat soupisku z…" : "Copy roster from…"}</option>
+                          {teams.filter((t) => t.id !== ct.id && !t.teamId).map((t) => (
+                            <option key={t.id} value={t.id}>{t.guestName ?? "?"}</option>
+                          ))}
+                        </select>
+                        <button
+                          disabled={copyingRosterFor === ct.id}
+                          onClick={async () => {
+                            const sel = (document.getElementById(`copy-source-${ct.id}`) as HTMLSelectElement)?.value;
+                            if (!sel) return;
+                            setCopyingRosterFor(ct.id);
+                            try {
+                              const res = await fetch(`/api/competitions/${competitionId}/guest-teams/${ct.id}/copy-roster`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ sourceCtId: sel }),
+                              });
+                              if (res.ok) {
+                                const data = await res.json();
+                                const fresh = await fetch(`/api/competitions/${competitionId}/guest-teams/${ct.id}/players`);
+                                if (fresh.ok) { const fp = await fresh.json(); setRosterPlayers((prev) => ({ ...prev, [ct.id]: fp })); }
+                                toast.success(isCS ? `Zkopírováno ${data.copied} hráčů` : `Copied ${data.copied} players`);
+                              } else {
+                                toast.error(isCS ? "Kopírování selhalo" : "Copy failed");
+                              }
+                            } finally {
+                              setCopyingRosterFor(null);
+                            }
+                          }}
+                          className="h-8 px-2.5 rounded-md border bg-background text-sm inline-flex items-center gap-1 hover:bg-muted disabled:opacity-50"
+                        >
+                          {copyingRosterFor === ct.id ? <Loader2 className="size-3.5 animate-spin" /> : <Copy className="size-3.5" />}
+                        </button>
+                      </div>
+                    )}
 
                     {/* Players list */}
                     {rosterLoading === ct.id ? (

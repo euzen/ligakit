@@ -54,7 +54,7 @@ interface Props {
   sports: Sport[];
   locale: string;
   isAdmin: boolean;
-  userId: string;
+  userId: string | null;
   labels: Labels;
 }
 

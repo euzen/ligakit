@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlayerRosterActions, type RosterPlayer } from "@/components/player-roster-actions";
+import { LineupEditor } from "@/components/lineup-editor";
 
 interface MatchEvent {
   id: string;
@@ -14,6 +15,7 @@ interface MatchEvent {
   minute: number | null;
   addedTime: number | null;
   playerName: string | null;
+  player2Name: string | null;
 }
 
 interface LiveMatch {
@@ -29,7 +31,7 @@ interface LiveMatch {
   awayTeam: { id: string; name: string } | null;
   events: MatchEvent[];
   periodOffset: number | null;
-  competition: { name: string; periodCount: number | null; periodDuration: number | null };
+  competition: { id: string; name: string; periodCount: number | null; periodDuration: number | null };
   homePlayers: RosterPlayer[];
   awayPlayers: RosterPlayer[];
 }
@@ -90,15 +92,26 @@ export default function ControlPage() {
   const matchId = params.id as string;
 
   const [match, setMatch] = useState<LiveMatch | null>(null);
+  const [homePlayers, setHomePlayers] = useState<RosterPlayer[]>([]);
+  const [awayPlayers, setAwayPlayers] = useState<RosterPlayer[]>([]);
   const [homeManualName, setHomeManualName] = useState("");
   const [awayManualName, setAwayManualName] = useState("");
+  const [showLineup, setShowLineup] = useState(false);
   const [minute, setMinute] = useState("");
   const [refereeUrl, setRefereeUrl] = useState<string | null>(null);
   const [generatingToken, setGeneratingToken] = useState(false);
+  const [homeLineupUrl, setHomeLineupUrl] = useState<string | null>(null);
+  const [awayLineupUrl, setAwayLineupUrl] = useState<string | null>(null);
+  const [generatingLineup, setGeneratingLineup] = useState<"HOME" | "AWAY" | null>(null);
 
   const fetchMatch = useCallback(async () => {
     const res = await fetch(`/api/matches/${matchId}/live`);
-    if (res.ok) setMatch(await res.json());
+    if (res.ok) {
+      const data = await res.json();
+      setMatch(data);
+      setHomePlayers(data.homePlayers ?? []);
+      setAwayPlayers(data.awayPlayers ?? []);
+    }
   }, [matchId]);
 
   useEffect(() => {
@@ -121,7 +134,7 @@ export default function ControlPage() {
     }
   };
 
-  const addEvent = async (type: string, teamSide: string, playerName?: string) => {
+  const addEvent = async (type: string, teamSide: string, playerName?: string, player2Name?: string) => {
     const autoMinute = match?.matchState === "LIVE"
       ? getCurrentMinute(match.startedAt, match.periodOffset)
       : null;
@@ -134,11 +147,22 @@ export default function ControlPage() {
         teamSide,
         minute: effectiveMinute,
         playerName: playerName?.trim() || null,
+        player2Name: player2Name?.trim() || null,
       }),
     });
     if (res.ok) {
       const data = await res.json();
-      setMatch(data.match);
+      setMatch((prev) => prev ? { ...prev, ...data.match, homePlayers: prev.homePlayers, awayPlayers: prev.awayPlayers } : prev);
+      // Locally update slots after substitution
+      if (type === "SUBSTITUTION" && playerName && player2Name) {
+        const swap = (players: RosterPlayer[]) => players.map((p) => {
+          if (p.name === playerName) return { ...p, slot: "SUBSTITUTE" };
+          if (p.name === player2Name) return { ...p, slot: "STARTER" };
+          return p;
+        });
+        if (teamSide === "HOME") setHomePlayers((prev) => swap(prev));
+        else setAwayPlayers((prev) => swap(prev));
+      }
       setHomeManualName("");
       setAwayManualName("");
       toast.success(type === "GOAL" ? `Gól přidán ⚽ (${effectiveMinute}')` : "Událost přidána");
@@ -155,8 +179,38 @@ export default function ControlPage() {
     });
     if (res.ok) {
       const data = await res.json();
-      setMatch(data.match);
+      setMatch((prev) => prev ? { ...prev, ...data.match, homePlayers: prev.homePlayers, awayPlayers: prev.awayPlayers } : prev);
+      // Reverse slot swap if the deleted event was a substitution
+      const ev = data.deletedEvent;
+      if (ev?.type === "SUBSTITUTION" && ev.playerName && ev.player2Name) {
+        const unswap = (players: RosterPlayer[]) => players.map((p) => {
+          if (p.name === ev.playerName) return { ...p, slot: "STARTER" };
+          if (p.name === ev.player2Name) return { ...p, slot: "SUBSTITUTE" };
+          return p;
+        });
+        if (ev.teamSide === "HOME") setHomePlayers((prev) => unswap(prev));
+        else setAwayPlayers((prev) => unswap(prev));
+      }
       toast.success("Poslední událost zrušena");
+    }
+  };
+
+  const generateLineupLink = async (side: "HOME" | "AWAY") => {
+    setGeneratingLineup(side);
+    try {
+      const res = await fetch(`/api/matches/${matchId}/lineup-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ side }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const url = `${window.location.origin}/cs/matches/${matchId}/lineup/${data.token}`;
+        if (side === "HOME") setHomeLineupUrl(url);
+        else setAwayLineupUrl(url);
+      }
+    } finally {
+      setGeneratingLineup(null);
     }
   };
 
@@ -209,6 +263,33 @@ export default function ControlPage() {
         )}
       </div>
 
+      {/* Lineup / Nominace */}
+      <div className="rounded-xl border overflow-hidden">
+        <button
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide hover:bg-muted/50 transition-colors"
+          onClick={() => setShowLineup((v) => !v)}
+        >
+          <span>📋 {showLineup ? "Skrýt nominaci" : "Nominace hráčů"}</span>
+          <span className="text-xs">{showLineup ? "▲" : "▼"}</span>
+        </button>
+        {showLineup && match && (
+          <div className="p-4">
+            <LineupEditor
+              matchId={matchId}
+              locale="cs"
+              homeName={homeName}
+              awayName={awayName}
+              homeTeamId={match.homeTeam?.id ?? null}
+              awayTeamId={match.awayTeam?.id ?? null}
+              homeTeamName={match.homeTeamName}
+              awayTeamName={match.awayTeamName}
+              competitionId={match.competition.id}
+              matchState={match.matchState}
+            />
+          </div>
+        )}
+      </div>
+
       {/* Match state controls */}
       <div className="rounded-xl border p-4 space-y-3">
         <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Ovládání zápasu</p>
@@ -220,7 +301,7 @@ export default function ControlPage() {
           )}
           {state === "LIVE" && (
             <>
-              <Button onClick={() => control({ matchState: "PAUSED" })} variant="outline" className="gap-1.5">
+              <Button onClick={() => control({ endPeriod: true })} variant="outline" className="gap-1.5">
                 ⏸ Pauza
               </Button>
               <Button
@@ -278,7 +359,7 @@ export default function ControlPage() {
         </div>
 
         <PlayerRosterActions
-          players={match.homePlayers ?? []}
+          players={homePlayers}
           teamName={homeName}
           side="HOME"
           onEvent={addEvent}
@@ -287,7 +368,7 @@ export default function ControlPage() {
         />
 
         <PlayerRosterActions
-          players={match.awayPlayers ?? []}
+          players={awayPlayers}
           teamName={awayName}
           side="AWAY"
           onEvent={addEvent}
@@ -307,15 +388,27 @@ export default function ControlPage() {
           <ul className="space-y-1 text-sm">
             {[...match.events].reverse().map((e) => (
               <li key={e.id} className="flex items-center gap-2 text-sm">
-                <span>{e.type === "GOAL" ? "⚽" : e.type === "OWN_GOAL" ? "⚽(vl.)" : e.type === "YELLOW_CARD" ? "🟨" : "🟥"}</span>
+                <span>{e.type === "GOAL" ? "⚽" : e.type === "OWN_GOAL" ? "⚽↩" : e.type === "YELLOW_CARD" ? "🟨" : e.type === "RED_CARD" ? "🟥" : e.type === "SUBSTITUTION" ? "🔄" : "📋"}</span>
                 <span className="font-medium">{e.teamSide === "HOME" ? homeName : awayName}</span>
-                {e.playerName && <span className="text-muted-foreground">{e.playerName}</span>}
+                {e.type === "SUBSTITUTION"
+                  ? <span className="text-muted-foreground">↑ {e.playerName} / ↓ {e.player2Name}</span>
+                  : e.playerName && <span className="text-muted-foreground">{e.playerName}</span>
+                }
                 {e.minute && <span className="text-muted-foreground text-xs">{e.minute}{e.addedTime ? `+${e.addedTime}` : ""}&apos;</span>}
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      {/* Events editor link */}
+      <a
+        href={`/cs/matches/${matchId}/events`}
+        className="flex items-center justify-between rounded-xl border px-4 py-3 hover:bg-muted/50 transition-colors group"
+      >
+        <span className="text-sm font-semibold">✏️ Upravit události zápasu</span>
+        <span className="text-xs text-muted-foreground group-hover:text-foreground">→</span>
+      </a>
 
       {/* Scoreboard + Referee links */}
       <div className="rounded-xl border p-4 space-y-3">
@@ -339,18 +432,29 @@ export default function ControlPage() {
           {refereeUrl ? (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground flex-1 font-mono truncate">{refereeUrl}</span>
-              <Button
-                size="sm" variant="outline"
-                onClick={() => { navigator.clipboard.writeText(refereeUrl); toast.success("Odkaz zkopírován"); }}
-              >
-                Kopírovat
-              </Button>
+              <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(refereeUrl); toast.success("Odkaz zkopírován"); }}>Kopírovat</Button>
             </div>
           ) : (
             <Button size="sm" variant="outline" onClick={generateRefereeLink} disabled={generatingToken}>
               {generatingToken ? "Generuji…" : "Vygenerovat odkaz pro rozhodčího"}
             </Button>
           )}
+
+          <p className="text-xs text-muted-foreground font-semibold pt-1">Nominace týmů</p>
+          {(["HOME", "AWAY"] as const).map((side) => {
+            const url = side === "HOME" ? homeLineupUrl : awayLineupUrl;
+            const teamName = side === "HOME" ? homeName : awayName;
+            return url ? (
+              <div key={side} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground flex-1 font-mono truncate">{url}</span>
+                <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(url); toast.success("Odkaz zkopírován"); }}>Kopírovat</Button>
+              </div>
+            ) : (
+              <Button key={side} size="sm" variant="outline" onClick={() => generateLineupLink(side)} disabled={generatingLineup === side}>
+                {generatingLineup === side ? "Generuji…" : `Nominace – ${teamName}`}
+              </Button>
+            );
+          })}
         </div>
       </div>
     </div>

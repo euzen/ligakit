@@ -37,30 +37,36 @@ export function Navbar({ locale }: NavbarProps) {
   };
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+    <nav className="bg-white border-b border-slate-100 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center justify-between">
-          <a
-            href={`/${locale}`}
-            className="font-bold text-lg text-primary hover:opacity-80 transition-opacity"
-          >
-            {tCommon("appName")}
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <a href={`/${locale}`} className="flex items-center gap-2 group">
+            <div className="bg-blue-700 p-1.5 rounded-xl group-hover:rotate-6 transition-transform">
+              <Trophy className="text-white size-5" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-900">
+              liga<span className="text-blue-700 font-light">kit</span>
+            </span>
           </a>
 
           <div className="flex items-center gap-2">
+            {/* Docs */}
             <a
               href={`/${locale}/docs`}
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-700 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-50"
             >
               <BookOpen className="size-4" />
-              <span className="hidden sm:inline">{locale === "cs" ? "Docs" : "Docs"}</span>
+              Docs
             </a>
+
+            {/* Language */}
             <a
               href={`/${otherLocale}${pathWithoutLocale}`}
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-blue-700 transition-colors px-2 py-1.5 rounded-lg hover:bg-slate-50"
             >
               <Globe className="size-4" />
-              {otherLocale.toUpperCase()}
+              <span className="hidden sm:inline">{otherLocale.toUpperCase()}</span>
             </a>
 
             <ThemeToggle />
@@ -68,80 +74,68 @@ export function Navbar({ locale }: NavbarProps) {
             {session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                    <Avatar className="size-8">
+                  <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity ml-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+                    <Avatar className="size-7">
                       <AvatarImage src={session.user?.image ?? undefined} alt={session.user?.name ?? ""} />
-                      <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                      <AvatarFallback className="text-xs bg-blue-700 text-white font-bold">
                         {getInitials(session.user?.name, session.user?.email)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="hidden sm:flex flex-col items-start">
-                      <span className="text-sm font-medium leading-none">
+                      <span className="text-sm font-semibold leading-none text-slate-900">
                         {session.user?.name ?? session.user?.email}
                       </span>
-                      <Badge
-                        variant={
-                          session.user?.role === "ADMINISTRATOR"
-                            ? "default"
-                            : "secondary"
-                        }
-                        className="text-[10px] h-4 mt-0.5"
-                      >
+                      <span className={`text-[10px] font-bold mt-0.5 ${session.user?.role === "ADMINISTRATOR" ? "text-blue-700" : "text-slate-400"}`}>
                         {tRoles(session.user?.role as "USER" | "ADMINISTRATOR")}
-                      </Badge>
+                      </span>
                     </div>
                   </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuContent align="end" className="w-52 rounded-2xl border-slate-100 shadow-xl p-1">
                   <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = `/${locale}/dashboard`)
-                    }
+                    onClick={() => (window.location.href = `/${locale}/dashboard`)}
+                    className="rounded-xl"
                   >
                     <LayoutDashboard className="size-4" />
                     {t("dashboard")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = `/${locale}/teams`)
-                    }
+                    onClick={() => (window.location.href = `/${locale}/teams`)}
+                    className="rounded-xl"
                   >
                     <Users className="size-4" />
                     {t("teams")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = `/${locale}/competitions`)
-                    }
+                    onClick={() => (window.location.href = `/${locale}/competitions`)}
+                    className="rounded-xl"
                   >
                     <Trophy className="size-4" />
                     {t("competitions")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() =>
-                      (window.location.href = `/${locale}/profile`)
-                    }
+                    onClick={() => (window.location.href = `/${locale}/profile`)}
+                    className="rounded-xl"
                   >
                     <UserCircle className="size-4" />
                     {locale === "cs" ? "Můj profil" : "My Profile"}
                   </DropdownMenuItem>
                   {session.user?.role === "ADMINISTRATOR" && (
                     <>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="my-1" />
                       <DropdownMenuItem
-                        onClick={() =>
-                          (window.location.href = `/${locale}/admin`)
-                        }
+                        onClick={() => (window.location.href = `/${locale}/admin`)}
+                        className="rounded-xl text-blue-700 focus:text-blue-700 focus:bg-blue-50"
                       >
                         <Shield className="size-4" />
                         {t("adminPanel")}
                       </DropdownMenuItem>
                     </>
                   )}
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="my-1" />
                   <DropdownMenuItem
                     onClick={() => signOut({ callbackUrl: `/${locale}/login` })}
-                    className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                    className="rounded-xl text-destructive focus:text-destructive"
                   >
                     <LogOut className="size-4" />
                     {t("logout")}
@@ -149,16 +143,16 @@ export function Navbar({ locale }: NavbarProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-1">
                 <a
                   href={`/${locale}/login`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-md hover:bg-muted"
+                  className="text-sm font-semibold text-slate-600 hover:text-blue-700 transition-colors px-3 py-1.5"
                 >
                   {t("login")}
                 </a>
                 <a
                   href={`/${locale}/register`}
-                  className="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center justify-center h-9 px-5 rounded-full bg-blue-700 text-white font-semibold text-sm hover:bg-blue-800 shadow-md shadow-blue-100 transition-all"
                 >
                   {t("register")}
                 </a>

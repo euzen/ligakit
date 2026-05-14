@@ -16,12 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash2, Check, X, Plus, Loader2, Users, Hash } from "lucide-react";
+import { Pencil, Trash2, Check, X, Plus, Loader2, Users, Hash, Download, Upload, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface Position {
   id: string;
   name: string;
+  labelCs?: string;
+  labelEn?: string;
 }
 
 interface Player {
@@ -29,7 +31,7 @@ interface Player {
   number: number | null;
   name: string;
   positionId: string | null;
-  position: { id: string; name: string } | null;
+  position: { id: string; name: string; labelCs?: string; labelEn?: string } | null;
 }
 
 interface RosterManagerProps {
@@ -66,6 +68,40 @@ export function RosterManager({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ created: number; updated: number; errors: string[] } | null>(null);
+
+  const posLabel = (pos: { name: string; labelCs?: string; labelEn?: string } | null) => {
+    if (!pos) return "";
+    return (locale === "cs" ? pos.labelCs : pos.labelEn) || pos.name;
+  };
+
+  type SortKey = "number" | "name" | "position";
+  const [sortKey, setSortKey] = useState<SortKey>("number");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir((d) => d === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  };
+
+  const sortedPlayers = [...players].sort((a, b) => {
+    let cmp = 0;
+    if (sortKey === "number") {
+      if (a.number == null && b.number == null) cmp = 0;
+      else if (a.number == null) cmp = 1;
+      else if (b.number == null) cmp = -1;
+      else cmp = a.number - b.number;
+    } else if (sortKey === "name") {
+      cmp = a.name.localeCompare(b.name);
+    } else if (sortKey === "position") {
+      const pa = posLabel(a.position);
+      const pb = posLabel(b.position);
+      cmp = pa.localeCompare(pb);
+    }
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
   const sortPlayers = (list: Player[]) =>
     [...list].sort((a, b) => {
       if (a.number != null && b.number != null) return a.number - b.number;
@@ -73,6 +109,52 @@ export function RosterManager({
       if (b.number != null) return 1;
       return a.name.localeCompare(b.name);
     });
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch(`/api/teams/${teamId}/roster/export`);
+      if (!res.ok) { toast.error(locale === "cs" ? "Export selhal" : "Export failed"); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const cd = res.headers.get("Content-Disposition") ?? "";
+      const match = cd.match(/filename="([^"]+)"/);
+      a.download = match?.[1] ?? "soupiska.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error(locale === "cs" ? "Export selhal" : "Export failed");
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setImporting(true);
+    setImportResult(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/roster/import`, { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error ?? "Import failed"); return; }
+      setImportResult(data);
+      if (data.created > 0 || data.updated > 0) {
+        const fresh = await fetch(`/api/teams/${teamId}/players`);
+        if (fresh.ok) setPlayers(sortPlayers(await fresh.json()));
+        const msg = locale === "cs"
+          ? `Přidáno: ${data.created}, aktualizováno: ${data.updated}`
+          : `Created: ${data.created}, updated: ${data.updated}`;
+        toast.success(msg);
+      }
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,6 +269,38 @@ export function RosterManager({
 
   return (
     <div className="space-y-6">
+      {/* Export / Import toolbar */}
+      <div className="flex items-center gap-2 justify-end">
+        <button
+          type="button"
+          onClick={handleExport}
+          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all"
+        >
+          <Download className="size-3.5" />
+          {locale === "cs" ? "Exportovat xlsx" : "Export xlsx"}
+        </button>
+        <label className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all cursor-pointer">
+          {importing ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+          {locale === "cs" ? "Importovat xlsx" : "Import xlsx"}
+          <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} disabled={importing} />
+        </label>
+      </div>
+
+      {importResult && (
+        <div className={`rounded-xl border px-4 py-3 text-sm space-y-1 ${
+          importResult.errors.length > 0 ? "bg-yellow-50 border-yellow-200" : "bg-green-50 border-green-200"
+        }`}>
+          <p className="font-semibold">
+            {locale === "cs"
+              ? `Přidáno: ${importResult.created} hráčů · Aktualizováno: ${importResult.updated}`
+              : `Created: ${importResult.created} · Updated: ${importResult.updated}`}
+          </p>
+          {importResult.errors.map((e, i) => (
+            <p key={i} className="text-xs text-red-600">{e}</p>
+          ))}
+        </div>
+      )}
+
       {/* Add player form */}
       <form onSubmit={handleAdd} className="space-y-3">
         {addError && (
@@ -231,13 +345,13 @@ export function RosterManager({
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={t("noPosition")}>
-                  {positions.find((p) => p.id === newPositionId)?.name ?? t("noPosition")}
+                  {posLabel(positions.find((p) => p.id === newPositionId) ?? null) || t("noPosition")}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">{t("noPosition")}</SelectItem>
                 {positions.map((pos) => (
-                  <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
+                  <SelectItem key={pos.id} value={pos.id}>{posLabel(pos)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -251,7 +365,7 @@ export function RosterManager({
 
       <Separator />
 
-      {/* Players list */}
+      {/* Players table */}
       {players.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 gap-3 text-center text-muted-foreground">
           <Users className="size-10 opacity-30" />
@@ -259,110 +373,138 @@ export function RosterManager({
           <p className="text-sm">{t("noPlayersDesc")}</p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {players.map((player) => (
-            <li key={player.id} className="rounded-lg border bg-card">
-              {editingId === player.id ? (
-                <div className="p-3 space-y-2">
-                  {editError && (
-                    <Alert variant="destructive" className="py-2">
-                      <AlertDescription className="text-xs">{editError}</AlertDescription>
-                    </Alert>
-                  )}
-                  <div className="flex gap-2 items-center">
-                    <Input
-                      type="number"
-                      min={0}
-                      max={999}
-                      value={editNumber}
-                      onChange={(e) => setEditNumber(e.target.value)}
-                      className="w-16 text-center shrink-0"
-                      disabled={isSaving}
-                      placeholder="#"
-                    />
-                    <Input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="flex-1"
-                      disabled={isSaving}
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => handleSave(player.id)}
-                      disabled={isSaving}
-                      className="inline-flex items-center justify-center size-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+        <div className="rounded-xl border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                {(["number", "name", "position"] as const).map((key) => {
+                  const labels: Record<string, string> = {
+                    number: "#",
+                    name: locale === "cs" ? "Jméno" : "Name",
+                    position: locale === "cs" ? "Pozice" : "Position",
+                  };
+                  const active = sortKey === key;
+                  return (
+                    <th
+                      key={key}
+                      onClick={() => handleSort(key)}
+                      className={`px-3 py-2.5 text-left font-semibold cursor-pointer select-none whitespace-nowrap hover:bg-muted transition-colors ${
+                        key === "number" ? "w-14" : ""
+                      } ${active ? "text-primary" : "text-muted-foreground"}`}
                     >
-                      {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      disabled={isSaving}
-                      className="inline-flex items-center justify-center size-9 rounded-lg border hover:bg-muted transition-colors"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                  {positions.length > 0 && (
-                    <Select
-                      value={editPositionId}
-                      onValueChange={(val) => setEditPositionId(val ?? "")}
-                      disabled={isSaving}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder={t("noPosition")}>
-                          {positions.find((p) => p.id === editPositionId)?.name ?? t("noPosition")}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">{t("noPosition")}</SelectItem>
-                        {positions.map((pos) => (
-                          <SelectItem key={pos.id} value={pos.id}>{pos.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <span className="inline-flex items-center gap-1">
+                        {labels[key]}
+                        {active
+                          ? sortDir === "asc"
+                            ? <ChevronUp className="size-3.5" />
+                            : <ChevronDown className="size-3.5" />
+                          : <ChevronsUpDown className="size-3.5 opacity-40" />
+                        }
+                      </span>
+                    </th>
+                  );
+                })}
+                <th className="w-20" />
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {sortedPlayers.map((player) => (
+                <tr key={player.id} className="hover:bg-muted/30 transition-colors">
+                  {editingId === player.id ? (
+                    <td colSpan={4} className="px-3 py-2">
+                      {editError && (
+                        <Alert variant="destructive" className="py-2 mb-2">
+                          <AlertDescription className="text-xs">{editError}</AlertDescription>
+                        </Alert>
+                      )}
+                      <div className="flex gap-2 items-center">
+                        <Input
+                          type="number" min={0} max={999}
+                          value={editNumber}
+                          onChange={(e) => setEditNumber(e.target.value)}
+                          className="w-16 text-center shrink-0"
+                          disabled={isSaving}
+                          placeholder="#"
+                        />
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="flex-1"
+                          disabled={isSaving}
+                          autoFocus
+                        />
+                        {positions.length > 0 && (
+                          <Select
+                            value={editPositionId}
+                            onValueChange={(val) => setEditPositionId(val ?? "")}
+                            disabled={isSaving}
+                          >
+                            <SelectTrigger className="w-36">
+                              <SelectValue placeholder={t("noPosition")}>
+                                {posLabel(positions.find((p) => p.id === editPositionId) ?? null) || t("noPosition")}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">{t("noPosition")}</SelectItem>
+                              {positions.map((pos) => (
+                                <SelectItem key={pos.id} value={pos.id}>{posLabel(pos)}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                        <button
+                          onClick={() => handleSave(player.id)}
+                          disabled={isSaving}
+                          className="inline-flex items-center justify-center size-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                        >
+                          {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          disabled={isSaving}
+                          className="inline-flex items-center justify-center size-9 rounded-lg border hover:bg-muted transition-colors"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    </td>
+                  ) : (
+                    <>
+                      <td className="px-3 py-2.5 w-14 text-center">
+                        {player.number != null
+                          ? <span className="font-bold text-primary tabular-nums">#{player.number}</span>
+                          : <Hash className="size-3.5 text-muted-foreground mx-auto" />}
+                      </td>
+                      <td className="px-3 py-2.5 font-medium">{player.name}</td>
+                      <td className="px-3 py-2.5 text-muted-foreground">
+                        {player.position ? posLabel(player.position) : <span className="text-muted-foreground/40">—</span>}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex gap-1 justify-end">
+                          <button
+                            onClick={() => startEdit(player)}
+                            className="inline-flex items-center justify-center size-7 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                          >
+                            <Pencil className="size-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteTarget(player.id)}
+                            disabled={deletingId === player.id}
+                            className="inline-flex items-center justify-center size-7 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive disabled:opacity-50"
+                          >
+                            {deletingId === player.id
+                              ? <Loader2 className="size-3.5 animate-spin" />
+                              : <Trash2 className="size-3.5" />}
+                          </button>
+                        </div>
+                      </td>
+                    </>
                   )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 px-3 py-2.5">
-                  <div className="w-10 text-center shrink-0">
-                    {player.number != null ? (
-                      <span className="text-sm font-bold text-primary">#{player.number}</span>
-                    ) : (
-                      <Hash className="size-4 text-muted-foreground mx-auto" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{player.name}</p>
-                    {player.position && (
-                      <p className="text-xs text-muted-foreground">{player.position.name}</p>
-                    )}
-                  </div>
-                  {player.position && (
-                    <Badge variant="secondary" className="shrink-0 text-xs hidden sm:inline-flex">
-                      {player.position.name}
-                    </Badge>
-                  )}
-                  <button
-                    onClick={() => startEdit(player)}
-                    className="inline-flex items-center justify-center size-8 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget(player.id)}
-                    disabled={deletingId === player.id}
-                    className="inline-flex items-center justify-center size-8 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive disabled:opacity-50"
-                  >
-                    {deletingId === player.id
-                      ? <Loader2 className="size-3.5 animate-spin" />
-                      : <Trash2 className="size-3.5" />
-                    }
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <ConfirmDialog

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Users, Plus, Pencil, Calendar, Share2 } from "lucide-react";
+import { Users, Plus, Pencil, Calendar, Share2, History } from "lucide-react";
 import { TeamDeleteButton } from "@/components/team-delete-button";
 
 export default async function TeamsPage({
@@ -128,6 +128,13 @@ export default async function TeamsPage({
                       >
                         <Users className="size-3.5" />
                         {locale === "cs" ? "Soupiska" : "Roster"}
+                      </a>
+                      <a
+                        href={`/${locale}/teams/${team.id}/matches`}
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-background text-sm font-medium hover:bg-muted transition-colors"
+                      >
+                        <History className="size-3.5" />
+                        {locale === "cs" ? "Archiv zápasů" : "Match archive"}
                       </a>
                       <a
                         href={`/${locale}/teams/${team.id}/public`}

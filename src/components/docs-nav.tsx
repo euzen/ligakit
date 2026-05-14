@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { BookOpen, Users, Trophy, Zap, HelpCircle, ChevronRight } from "lucide-react";
+import { BookOpen, Users, Trophy, Zap, HelpCircle, ChevronRight, Shield } from "lucide-react";
 
 interface DocsNavProps {
   locale: string;
@@ -43,6 +43,14 @@ const getNav = (locale: string, cs: boolean) => [
     items: [
       { slug: "matches/results", label: cs ? "Zadávání výsledků" : "Entering Results" },
       { slug: "matches/live", label: cs ? "Živé skóre" : "Live Score" },
+    ],
+  },
+  {
+    label: cs ? "Administrace" : "Administration",
+    icon: Shield,
+    items: [
+      { slug: "admin", label: cs ? "Přehled" : "Overview" },
+      { slug: "admin/sports", label: cs ? "Správa sportů" : "Sports Management" },
     ],
   },
   {

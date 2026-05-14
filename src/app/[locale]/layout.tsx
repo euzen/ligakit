@@ -47,7 +47,7 @@ export default async function LocaleLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
         <ThemeProvider initialTheme={session?.user?.theme}>
           <SessionProvider session={session}>
             <NextIntlClientProvider messages={messages}>

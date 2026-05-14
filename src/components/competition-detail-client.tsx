@@ -114,13 +114,8 @@ export function CompetitionDetailClient({
   const defaultTab = standings || groupStandings ? "table" : (competitionType === "TOURNAMENT" || competitionType === "CUP") ? "bracket" : "matches";
 
   const validTabIds = tabs.map(t => t.id);
-  const getInitialTab = () => {
-    if (typeof window === "undefined") return defaultTab;
-    const hash = window.location.hash.replace("#", "");
-    return validTabIds.includes(hash) ? hash : defaultTab;
-  };
 
-  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   useEffect(() => {
     const hash = window.location.hash.replace("#", "");
@@ -216,7 +211,7 @@ export function CompetitionDetailClient({
       </div>
 
       {/* Tabs */}
-      <div className="border-b flex gap-0 flex-wrap">
+      <div className="border-b flex gap-0 flex-wrap items-center">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -233,6 +228,17 @@ export function CompetitionDetailClient({
             {tab.label}
           </button>
         ))}
+        {canManage && (
+          <a
+            href={`/${locale}/schedule/${competitionId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="ml-auto mb-px px-3 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap flex items-center gap-1"
+          >
+            {cs ? "Veřejný rozpis" : "Public schedule"}
+            <span className="opacity-60">↗</span>
+          </a>
+        )}
       </div>
 
       {/* Tab content */}
@@ -348,7 +354,14 @@ function StandingsTable({
                     <span className="text-muted-foreground text-sm">{i + 1}</span>
                   )}
                 </TableCell>
-                <TableCell className="font-medium">{row.teamName}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {row.teamLogo
+                      ? <img src={row.teamLogo} alt="" className="size-5 rounded-full object-cover shrink-0" />
+                      : <span className="size-5 rounded-full bg-muted shrink-0" />}
+                    {row.teamName}
+                  </div>
+                </TableCell>
                 <TableCell className="text-center tabular-nums">{row.played}</TableCell>
                 <TableCell className="text-center tabular-nums text-green-600 dark:text-green-400 hidden sm:table-cell">{row.won}</TableCell>
                 <TableCell className="text-center tabular-nums text-muted-foreground hidden sm:table-cell">{row.drawn}</TableCell>

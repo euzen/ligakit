@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Trash2, Plus, Check, X, Loader2, Calendar, Tv } from "lucide-react";
+import { Trash2, Plus, Check, X, Loader2, Calendar, Tv, Pencil } from "lucide-react";
 
 function toLocalDatetimeInput(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -60,6 +60,15 @@ interface CompetitionMatchesManagerProps {
 function resolveTeamName(m: Match, side: "home" | "away"): string {
   if (side === "home") return m.homeTeam?.name ?? m.homeTeamName ?? "?";
   return m.awayTeam?.name ?? m.awayTeamName ?? "?";
+}
+
+function resolveTeamLogo(m: Match, side: "home" | "away"): string | null | undefined {
+  return side === "home" ? m.homeTeam?.logoUrl : m.awayTeam?.logoUrl;
+}
+
+function TeamLogo({ url, name }: { url?: string | null; name: string }) {
+  if (!url) return null;
+  return <img src={url} alt={name} className="size-5 rounded-full object-cover shrink-0" />;
 }
 
 const STATUS_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
@@ -493,7 +502,10 @@ export function CompetitionMatchesManager({
                     ) : (
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2 min-w-0">
-                          <span className="text-sm font-medium truncate">{resolveTeamName(m, "home")}</span>
+                          <span className="flex items-center gap-1.5 text-sm font-medium truncate">
+                            <TeamLogo url={resolveTeamLogo(m, "home")} name={resolveTeamName(m, "home")} />
+                            {resolveTeamName(m, "home")}
+                          </span>
                           <div
                             className={`text-center shrink-0 px-2 flex flex-col items-center gap-0.5 rounded ${canManage ? "cursor-pointer hover:bg-muted transition-colors" : ""}`}
                             onClick={() => canManage && startEdit(m)}
@@ -512,7 +524,10 @@ export function CompetitionMatchesManager({
                               </span>
                             )}
                           </div>
-                          <span className="text-sm font-medium truncate text-right">{resolveTeamName(m, "away")}</span>
+                          <span className="flex items-center justify-end gap-1.5 text-sm font-medium truncate">
+                            {resolveTeamName(m, "away")}
+                            <TeamLogo url={resolveTeamLogo(m, "away")} name={resolveTeamName(m, "away")} />
+                          </span>
                         </div>
                         <Badge
                           variant={STATUS_VARIANTS[m.status]}
@@ -532,6 +547,17 @@ export function CompetitionMatchesManager({
                           >
                             <Tv className="size-3.5" />
                           </a>
+                          {canManage && (
+                            <a
+                              href={`/${locale}/matches/${m.id}/events`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={isCS ? "Upravit události" : "Edit events"}
+                              className="inline-flex items-center justify-center size-7 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                            >
+                              <Pencil className="size-3.5" />
+                            </a>
+                          )}
                           {canManage && (
                             <button onClick={() => setDeleteTarget(m.id)} className="inline-flex items-center justify-center size-7 rounded hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
                               <Trash2 className="size-3.5" />

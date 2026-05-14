@@ -35,7 +35,7 @@ export default async function RosterPage({
       },
       players: {
         orderBy: [{ number: "asc" }, { name: "asc" }],
-        include: { position: { select: { id: true, name: true } } },
+        include: { position: { select: { id: true, name: true, labelCs: true, labelEn: true } } },
       },
     },
   });

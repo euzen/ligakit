@@ -70,21 +70,45 @@ model VerificationToken {
 }
 
 model Sport {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  icon      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String   @unique
+  icon        String?
+  description String?
+  config      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   teams        Team[]
   positions    Position[]
   competitions Competition[]
+  eventTypes   EventType[]
+}
+
+model EventType {
+  id           String   @id @default(cuid())
+  sportId      String
+  name         String
+  labelCs      String
+  labelEn      String
+  value        Int?
+  affectsScore Boolean  @default(true)
+  color        String?
+  icon         String?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sport Sport @relation(fields: [sportId], references: [id], onDelete: Cascade)
+
+  @@unique([sportId, name])
 }
 
 model Position {
-  id      String @id @default(cuid())
-  name    String
-  sportId String
+  id       String  @id @default(cuid())
+  name     String
+  labelCs  String  @default("")
+  labelEn  String  @default("")
+  sportId  String
 
   sport   Sport    @relation(fields: [sportId], references: [id], onDelete: Cascade)
   players Player[]
@@ -150,6 +174,7 @@ model Competition {
   cupThirdPlaceAdvance    Int?     // number of best 3rd places advancing (0, 1, 2, 4)
   cupCustomPairings       String?  // JSON serialized custom pairings (for CUSTOM preset)
   thirdPlaceMatch  Boolean  @default(false)  // generate 3rd place match for TOURNAMENT/CUP
+  logoUrl          String?
 
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
@@ -184,6 +209,7 @@ model GuestPlayer {
   number           Int?
 
   competitionTeam CompetitionTeam @relation(fields: [competitionTeamId], references: [id], onDelete: Cascade)
+  matchLineups    MatchPlayer[]
 }
 
 model Match {
@@ -214,6 +240,8 @@ model Match {
   awayTeam      Team?             @relation("AwayMatches", fields: [awayTeamId], references: [id])
   events        MatchEvent[]
   refereeToken  MatchRefereeToken?
+  matchPlayers  MatchPlayer[]
+  lineupTokens  LineupToken[]
 }
 
 model MatchEvent {
@@ -223,8 +251,9 @@ model MatchEvent {
   minute     Int?
   addedTime  Int?
   teamSide   String
-  playerName String?
-  createdAt  DateTime @default(now())
+  playerName  String?
+  player2Name String?
+  createdAt   DateTime @default(now())
 
   match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
 }
@@ -246,9 +275,42 @@ model Player {
   teamId     String
   positionId String?
 
-  team     Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  position Position? @relation(fields: [positionId], references: [id], onDelete: SetNull)
-  awards   CompetitionAward[]
+  team         Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  position     Position?      @relation(fields: [positionId], references: [id], onDelete: SetNull)
+  awards       CompetitionAward[]
+  matchLineups MatchPlayer[]
+}
+
+enum LineupSlot {
+  STARTER
+  SUBSTITUTE
+}
+
+model LineupToken {
+  id        String    @id @default(cuid())
+  matchId   String
+  teamSide  String
+  token     String    @unique @default(cuid())
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, teamSide])
+}
+
+model MatchPlayer {
+  id            String     @id @default(cuid())
+  matchId       String
+  playerId      String?
+  guestPlayerId String?
+  teamSide      String
+  slot          LineupSlot @default(STARTER)
+  shirtNumber   Int?
+
+  match       Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player      Player?      @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  guestPlayer GuestPlayer? @relation(fields: [guestPlayerId], references: [id], onDelete: Cascade)
 }
 
 model CompetitionAward {
