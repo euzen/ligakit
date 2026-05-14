@@ -79,7 +79,7 @@ export function PlayerRosterActions({
             🔄 Střídání – vychází <strong>{subOut}</strong>, vyber nastupujícího:
           </p>
           <ul className="divide-y rounded-lg border overflow-hidden">
-            {players.filter((p) => p.name !== subOut).map((p) => (
+            {players.filter((p) => p.slot === "SUBSTITUTE").map((p) => (
               <li key={p.id}>
                 <button
                   onClick={() => handleSubIn(p.name)}
