@@ -145,6 +145,7 @@ export default function ScoreboardPage() {
     if (icon === "flag-triangle-right" || icon === "flag") return "🚩";
     if (type === "RED_CARD" || type === "YELLOW_RED") return "🟥";
     if (isCardType(type)) return "🟨";
+    if (type === "OWN_GOAL") return "⚽↩";
     if (isGoalType(type) && icon !== "target") return "⚽";
     if (icon === "target" && !isGoalType(type)) return "⚽️";
     if (isGoalType(type)) return "⚽";
@@ -159,6 +160,7 @@ export default function ScoreboardPage() {
   const timerBox = dark ? "bg-white/5 border-white/10" : "bg-slate-100 border-slate-200";
   const eventRow = dark ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200";
   const eventHighlight = dark ? "bg-blue-600/20 border-blue-500/40" : "bg-blue-50 border-blue-300";
+  const ownGoalRow = dark ? "bg-red-600/10 border-red-500/40" : "bg-red-50 border-red-300";
   const dividerColor = dark ? "text-slate-700" : "text-slate-300";
 
   return (
@@ -290,7 +292,8 @@ export default function ScoreboardPage() {
                   : "";
                 const label = eventLabel(ev.type);
                 const isSub = ev.type === "SUBSTITUTION";
-                const rowCls = `flex items-center gap-1.5 px-2 py-1.5 rounded-lg border w-full ${index === 0 ? eventHighlight : eventRow}`;
+                const isOwnGoal = ev.type === "OWN_GOAL";
+                const rowCls = `flex items-center gap-1.5 px-2 py-1.5 rounded-lg border w-full ${isOwnGoal ? ownGoalRow : index === 0 ? eventHighlight : eventRow}`;
 
                 const HomeCard = (
                   <div className={rowCls}>
@@ -302,10 +305,11 @@ export default function ScoreboardPage() {
                           <span className="text-emerald-500">↑ {ev.player2Name ?? "?"}</span>
                         </p>
                       ) : (
-                        <p className="text-xs font-black uppercase italic tracking-tight truncate leading-tight">
+                        <p className="text-xs font-black uppercase italic tracking-tight truncate leading-tight flex items-center gap-1 justify-end flex-wrap">
+                          {isOwnGoal && <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-red-600 text-white leading-none shrink-0">VG</span>}
                           {ev.playerName
-                            ? <>{ev.playerName} <span className="font-normal opacity-50 not-italic">({label})</span></>
-                            : label
+                            ? <>{ev.playerName}{!isOwnGoal && <span className="font-normal opacity-50 not-italic"> ({label})</span>}</>
+                            : (!isOwnGoal && label)
                           }
                         </p>
                       )}
@@ -325,11 +329,12 @@ export default function ScoreboardPage() {
                           <span className="text-emerald-500">↑ {ev.player2Name ?? "?"}</span>
                         </p>
                       ) : (
-                        <p className="text-xs font-black uppercase italic tracking-tight truncate leading-tight">
+                        <p className="text-xs font-black uppercase italic tracking-tight truncate leading-tight flex items-center gap-1 flex-wrap">
                           {ev.playerName
-                            ? <>{ev.playerName} <span className="font-normal opacity-50 not-italic">({label})</span></>
-                            : label
+                            ? <>{ev.playerName}{!isOwnGoal && <span className="font-normal opacity-50 not-italic"> ({label})</span>}</>
+                            : (!isOwnGoal && label)
                           }
+                          {isOwnGoal && <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-red-600 text-white leading-none shrink-0">VG</span>}
                         </p>
                       )}
                     </div>
