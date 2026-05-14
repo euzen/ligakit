@@ -151,6 +151,7 @@ export default function HomePage() {
           <div className="relative">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl" />
             <div className="bg-white rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden relative z-10">
+              {/* Header */}
               <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <div className="bg-orange-500 text-white px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">
@@ -160,78 +161,83 @@ export default function HomePage() {
                     {isCS ? "Krajský přebor • 14. kolo" : "Regional League • Round 14"}
                   </span>
                 </div>
-                <div className="flex gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                <span className="text-xs font-mono font-bold text-orange-400">72&apos;</span>
+              </div>
+
+              {/* Score */}
+              <div className="px-10 pt-8 pb-6 flex items-center justify-between border-b border-slate-50">
+                <div className="text-center w-24">
+                  <div className="w-14 h-14 mx-auto bg-blue-50 rounded-2xl flex items-center justify-center mb-2">
+                    <ShieldCheck className="text-blue-700" size={28} />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-tight">FK Slavoj</span>
+                </div>
+                <div className="text-center">
+                  <div className="text-6xl font-black tabular-nums tracking-tighter">2 : 1</div>
+                  <div className="mt-2 text-[10px] font-bold text-orange-500 uppercase tracking-widest bg-orange-50 px-3 py-1 rounded-full inline-block">
+                    {isCS ? "2. poločas" : "2nd half"}
+                  </div>
+                </div>
+                <div className="text-center w-24">
+                  <div className="w-14 h-14 mx-auto bg-orange-50 rounded-2xl flex items-center justify-center mb-2">
+                    <Trophy className="text-orange-500" size={28} />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-tight">SK Jiskra</span>
                 </div>
               </div>
 
-              <div className="p-10 flex flex-col items-center border-b border-slate-50">
-                <div className="flex items-center gap-10 mb-8">
-                  <div className="text-center w-24">
-                    <div className="w-16 h-16 mx-auto bg-blue-50 rounded-2xl flex items-center justify-center mb-3">
-                      <ShieldCheck className="text-blue-700" size={32} />
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-tight">
-                      FK Slavoj
-                    </span>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-6xl font-black tabular-nums tracking-tighter">
-                      2 : 1
-                    </div>
-                    <div className="mt-2 text-[10px] font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full inline-block">
-                      72:45
-                    </div>
-                  </div>
-                  <div className="text-center w-24">
-                    <div className="w-16 h-16 mx-auto bg-orange-50 rounded-2xl flex items-center justify-center mb-3">
-                      <Trophy className="text-orange-500" size={32} />
-                    </div>
-                    <span className="text-xs font-bold uppercase tracking-tight">
-                      SK Jiskra
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-full space-y-4">
-                  <div className="flex justify-between items-center text-xs border-b border-slate-50 pb-3">
-                    <span className="text-slate-400 font-medium">
-                      {isCS ? "Držení míče" : "Possession"}
-                    </span>
-                    <div className="flex-1 mx-4 h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
-                      <div className="h-full bg-blue-600 w-[58%]" />
-                      <div className="h-full bg-orange-500 w-[42%]" />
-                    </div>
-                    <span className="text-slate-400 font-medium">
-                      58% vs 42%
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-slate-50 flex gap-2">
+              {/* Tabs */}
+              <div className="px-4 pt-3 pb-2 bg-slate-50 flex gap-2">
                 <button
                   onClick={() => setActiveTab("match")}
-                  className={`flex-1 py-2 text-xs font-bold uppercase rounded-lg transition-all ${
-                    activeTab === "match"
-                      ? "bg-white shadow-sm text-blue-700"
-                      : "text-slate-400 hover:text-slate-600"
+                  className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-lg transition-all ${
+                    activeTab === "match" ? "bg-white shadow-sm text-blue-700" : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
                   {isCS ? "Zápas" : "Match"}
                 </button>
                 <button
-                  onClick={() => setActiveTab("table")}
-                  className={`flex-1 py-2 text-xs font-bold uppercase rounded-lg transition-all ${
-                    activeTab === "table"
-                      ? "bg-white shadow-sm text-blue-700"
-                      : "text-slate-400 hover:text-slate-600"
+                  onClick={() => setActiveTab("events")}
+                  className={`flex-1 py-1.5 text-xs font-bold uppercase rounded-lg transition-all ${
+                    activeTab === "events" ? "bg-white shadow-sm text-blue-700" : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
-                  {isCS ? "Live Tabulka" : "Live Table"}
+                  {isCS ? "Události" : "Events"}
                 </button>
               </div>
+
+              {/* Tab content */}
+              {activeTab === "match" ? (
+                <div className="px-6 pb-5 space-y-2 pt-2">
+                  {[
+                    { min: "23'", icon: "⚽", label: "Novák", side: "home" },
+                    { min: "41'", icon: "🟨", label: "Dvořák", side: "away" },
+                    { min: "67'", icon: "⚽", label: "Procházka", side: "home" },
+                    { min: "71'", icon: "⚽", label: "Horáček", side: "away" },
+                  ].map((ev, i) => (
+                    <div key={i} className={`flex items-center gap-2 text-xs ${ev.side === "home" ? "flex-row" : "flex-row-reverse"}`}>
+                      <span className="font-mono text-slate-400 w-8 shrink-0 text-center">{ev.min}</span>
+                      <span>{ev.icon}</span>
+                      <span className="font-medium text-slate-700">{ev.label}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="px-6 pb-5 pt-2 space-y-2">
+                  {[
+                    { min: "1'", label: isCS ? "Zápas zahájen" : "Match started", color: "text-green-600" },
+                    { min: "23'", label: isCS ? "Gól — FK Slavoj (Novák)" : "Goal — FK Slavoj (Novák)", color: "text-blue-600" },
+                    { min: "45'", label: isCS ? "Konec 1. poločasu" : "Half-time", color: "text-slate-500" },
+                    { min: "67'", label: isCS ? "Gól — FK Slavoj (Procházka)" : "Goal — FK Slavoj (Procházka)", color: "text-blue-600" },
+                    { min: "71'", label: isCS ? "Gól — SK Jiskra (Horáček)" : "Goal — SK Jiskra (Horáček)", color: "text-orange-600" },
+                  ].map((ev, i) => (
+                    <div key={i} className="flex items-start gap-3 text-xs">
+                      <span className="font-mono text-slate-400 w-8 shrink-0">{ev.min}</span>
+                      <span className={`font-medium ${ev.color}`}>{ev.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Overlay badge */}
@@ -241,9 +247,9 @@ export default function HomePage() {
               </div>
               <div>
                 <div className="text-[10px] font-bold text-slate-400 uppercase">
-                  Status
+                  {isCS ? "Aktualizace" : "Last update"}
                 </div>
-                <div className="text-sm font-bold">{isCS ? "Synchronizováno" : "Synced"}</div>
+                <div className="text-sm font-bold">{isCS ? "před 3 s" : "3 s ago"}</div>
               </div>
             </div>
           </div>
