@@ -360,87 +360,108 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-[40px] shadow-2xl border border-slate-100 rotate-2">
-            <div className="bg-slate-50 rounded-[32px] p-8 space-y-5">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold">{isCS ? "Nová soutěž" : "New competition"}</h3>
-                <Settings className="text-slate-300" />
+          <div className="rotate-2 max-w-sm w-full">
+            {/* Card – mirrors shadcn Card: rounded-xl ring-1 ring-foreground/10 */}
+            <div className="rounded-xl bg-white ring-1 ring-black/10 shadow-2xl overflow-hidden text-sm text-slate-900">
+              {/* CardHeader */}
+              <div className="px-4 pt-4 pb-3 border-b border-slate-100">
+                <p className="font-medium text-base leading-snug">
+                  {isCS ? "Nová soutěž" : "New competition"}
+                </p>
               </div>
+              {/* CardContent */}
+              <div className="px-4 py-4 space-y-4">
 
-              <div className="space-y-3">
                 {/* Name */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-                    {isCS ? "Název" : "Name"}
+                  <label className="text-sm font-medium leading-none">
+                    {isCS ? "Název" : "Name"} *
                   </label>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200 text-sm font-medium text-slate-700">
+                  <div className="h-8 w-full rounded-lg border border-slate-200 bg-transparent px-2.5 flex items-center text-sm text-slate-700">
                     {isCS ? "Krajský přebor 2025" : "Regional League 2025"}
-                  </div>
-                </div>
-
-                {/* Type */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-                    {isCS ? "Typ" : "Type"}
-                  </label>
-                  <div className="flex gap-2">
-                    {(isCS
-                      ? ["Liga", "Pohár", "Turnaj"]
-                      : ["League", "Cup", "Tournament"]
-                    ).map((label, i) => (
-                      <div
-                        key={label}
-                        className={`flex-1 py-2 rounded-xl border text-xs font-bold text-center transition-colors ${
-                          i === 0
-                            ? "bg-blue-700 text-white border-blue-700"
-                            : "bg-white text-slate-400 border-slate-200"
-                        }`}
-                      >
-                        {label}
-                      </div>
-                    ))}
                   </div>
                 </div>
 
                 {/* Visibility */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
+                  <label className="text-sm font-medium leading-none">
                     {isCS ? "Viditelnost" : "Visibility"}
                   </label>
                   <div className="flex gap-2">
-                    <div className="flex-1 py-2 rounded-xl border text-xs font-bold text-center bg-blue-700 text-white border-blue-700 flex items-center justify-center gap-1.5">
-                      <Globe size={12} /> {isCS ? "Veřejný" : "Public"}
+                    <div className="flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium bg-slate-900 text-white border-slate-900">
+                      <Globe size={14} />
+                      {isCS ? "Veřejný" : "Public"}
                     </div>
-                    <div className="flex-1 py-2 rounded-xl border text-xs font-bold text-center bg-white text-slate-400 border-slate-200">
+                    <div className="flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-slate-600 border-slate-200">
+                      <Users size={14} />
                       {isCS ? "Soukromý" : "Private"}
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    {isCS ? "Veřejný turnaj — správci týmů si přihlašují sami" : "Public — team owners register themselves"}
+                  </p>
+                </div>
+
+                {/* Type + Status */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">
+                      {isCS ? "Typ" : "Type"} *
+                    </label>
+                    <div className="h-8 w-full rounded-lg border border-slate-200 px-2.5 flex items-center justify-between text-sm text-slate-700">
+                      <span>{isCS ? "Liga" : "League"}</span>
+                      <ChevronRight size={14} className="text-slate-400 rotate-90" />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium leading-none">
+                      {isCS ? "Stav" : "Status"}
+                    </label>
+                    <div className="h-8 w-full rounded-lg border border-slate-200 px-2.5 flex items-center justify-between text-sm text-slate-700">
+                      <span>{isCS ? "Návrh" : "Draft"}</span>
+                      <ChevronRight size={14} className="text-slate-400 rotate-90" />
                     </div>
                   </div>
                 </div>
 
                 {/* Period settings */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-                      {isCS ? "Počet částí" : "Periods"}
-                    </label>
-                    <div className="p-3 bg-white rounded-xl border border-slate-200 font-bold text-center text-sm">
-                      2
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium leading-none">
+                    {isCS ? "Nastavení částí zápasu" : "Match period settings"}
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400">
+                        {isCS ? "Počet částí" : "Number of periods"}
+                      </label>
+                      <div className="h-8 rounded-lg border border-slate-200 px-2.5 flex items-center text-sm text-slate-700">
+                        2
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-400">
+                        {isCS ? "Délka části (min)" : "Duration (min)"}
+                      </label>
+                      <div className="h-8 rounded-lg border border-slate-200 px-2.5 flex items-center text-sm text-slate-700">
+                        45
+                      </div>
                     </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">
-                      {isCS ? "Délka (min)" : "Duration (min)"}
-                    </label>
-                    <div className="p-3 bg-white rounded-xl border border-slate-200 font-bold text-center text-sm text-blue-700">
-                      45
-                    </div>
-                  </div>
+                  <p className="text-xs text-slate-400">
+                    {isCS ? "Prázdné = standardní (2 × 45 min)" : "Empty = default (2 × 45 min)"}
+                  </p>
+                </div>
+
+                {/* Submit button */}
+                <div className="flex justify-end pt-1">
+                  <a
+                    href={`/${locale}/competitions/new`}
+                    className="inline-flex items-center gap-1.5 h-8 px-4 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition-colors"
+                  >
+                    {isCS ? "Uložit soutěž" : "Save competition"}
+                  </a>
                 </div>
               </div>
-
-              <a href={`/${locale}/competitions/new`} className="block w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-colors text-center">
-                {isCS ? "Založit soutěž" : "Create competition"}
-              </a>
             </div>
           </div>
         </div>
