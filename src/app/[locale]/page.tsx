@@ -22,6 +22,7 @@ import {
 export default function HomePage() {
   const params = useParams();
   const locale = (params?.locale as string) ?? "cs";
+  const isCS = locale === "cs";
 
   const { data: session, status } = useSession();
   const loggedIn = status === "authenticated" && !!session;
@@ -57,13 +58,13 @@ export default function HomePage() {
 
           <div className="hidden lg:flex items-center gap-8 text-sm font-semibold text-slate-600">
             <a href="#funkce" className="hover:text-blue-700 transition-colors">
-              Funkce
+              {isCS ? "Funkce" : "Features"}
             </a>
             <a href="#engine" className="hover:text-blue-700 transition-colors">
-              Sportovní Engine
+              {isCS ? "Sportovní Engine" : "Sports Engine"}
             </a>
             <a href={`/${locale}/docs`} className="hover:text-blue-700 transition-colors">
-              Dokumentace
+              {isCS ? "Dokumentace" : "Docs"}
             </a>
             <div className="h-6 w-px bg-slate-200" />
             {status !== "loading" && (
@@ -81,13 +82,13 @@ export default function HomePage() {
                     href={`/${locale}/login`}
                     className="text-slate-700 hover:text-blue-700 transition-colors"
                   >
-                    Přihlásit
+                    {isCS ? "Přihlásit" : "Log in"}
                   </a>
                   <a
                     href={`/${locale}/register`}
                     className="bg-blue-700 text-white px-6 py-2.5 rounded-full hover:bg-blue-800 shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
                   >
-                    Vytvořit turnaj <ChevronRight size={16} />
+                    {isCS ? "Vytvořit turnaj" : "Create tournament"} <ChevronRight size={16} />
                   </a>
                 </>
               )
@@ -110,28 +111,28 @@ export default function HomePage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600" />
               </span>
-              Spravujte sport
+              {isCS ? "Spravujte sport" : "Manage sport"}
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
-              Organizujte sport <br />
-              <span className="text-blue-700">v reálném čase.</span>
+              {isCS ? <>Organizujte sport <br /><span className="text-blue-700">v reálném čase.</span></> : <>Organise sport <br /><span className="text-blue-700">in real time.</span></>}
             </h1>
             <p className="text-xl text-slate-600 leading-relaxed max-w-xl">
-              Ligakit je intuitivní platforma pro tvorbu turnajů a lig s live
-              přenosy ve stylu Livesport. Od registrací až po finálový hvizd.
+              {isCS
+                ? "Ligakit je intuitivní platforma pro tvorbu turnajů a lig s live přenosy ve stylu Livesport. Od registrací až po finálový hvizd."
+                : "Ligakit is an intuitive platform for creating tournaments and leagues with live scoring. From sign-ups to the final whistle."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
                 href={`/${locale}/register`}
                 className="bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-blue-800 shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-3"
               >
-                Založit turnaj <ChevronRight size={20} />
+                {isCS ? "Založit turnaj" : "Create tournament"} <ChevronRight size={20} />
               </a>
               <a
                 href={`/${locale}/competitions`}
                 className="bg-white text-slate-700 border border-slate-200 px-8 py-4 rounded-2xl font-bold text-lg hover:border-blue-700 hover:text-blue-700 transition-all flex items-center justify-center gap-3"
               >
-                Prohlédnout soutěže <Play size={18} fill="currentColor" />
+                {isCS ? "Prohlédnout soutěže" : "Browse competitions"} <Play size={18} fill="currentColor" />
               </a>
             </div>
           </div>
@@ -146,7 +147,7 @@ export default function HomePage() {
                     Live
                   </div>
                   <span className="text-sm font-bold opacity-80">
-                    Krajský přebor • 14. kolo
+                    {isCS ? "Krajský přebor • 14. kolo" : "Regional League • Round 14"}
                   </span>
                 </div>
                 <div className="flex gap-1">
@@ -186,7 +187,7 @@ export default function HomePage() {
                 <div className="w-full space-y-4">
                   <div className="flex justify-between items-center text-xs border-b border-slate-50 pb-3">
                     <span className="text-slate-400 font-medium">
-                      Držení míče
+                      {isCS ? "Držení míče" : "Possession"}
                     </span>
                     <div className="flex-1 mx-4 h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
                       <div className="h-full bg-blue-600 w-[58%]" />
@@ -208,7 +209,7 @@ export default function HomePage() {
                       : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
-                  Zápas
+                  {isCS ? "Zápas" : "Match"}
                 </button>
                 <button
                   onClick={() => setActiveTab("table")}
@@ -218,7 +219,7 @@ export default function HomePage() {
                       : "text-slate-400 hover:text-slate-600"
                   }`}
                 >
-                  Live Tabulka
+                  {isCS ? "Live Tabulka" : "Live Table"}
                 </button>
               </div>
             </div>
@@ -232,7 +233,7 @@ export default function HomePage() {
                 <div className="text-[10px] font-bold text-slate-400 uppercase">
                   Status
                 </div>
-                <div className="text-sm font-bold">Synchronizováno</div>
+                <div className="text-sm font-bold">{isCS ? "Synchronizováno" : "Synced"}</div>
               </div>
             </div>
           </div>
@@ -244,11 +245,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
             <h2 className="text-4xl font-bold tracking-tight">
-              Kompletní ekosystém pro váš sport
+              {isCS ? "Kompletní ekosystém pro váš sport" : "A complete ecosystem for your sport"}
             </h2>
             <p className="text-slate-500 text-lg">
-              Vše, co potřebujete od prvního nápadu na turnaj až po vyhlášení
-              vítězů a archivaci statistik.
+              {isCS
+                ? "Vše, co potřebujete od prvního nápadu na turnaj až po vyhlášení vítězů a archivaci statistik."
+                : "Everything you need from the first idea to the award ceremony and stats archive."}
             </p>
           </div>
 
@@ -257,10 +259,11 @@ export default function HomePage() {
               <div className="w-14 h-14 bg-blue-700 text-white rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-100 group-hover:scale-110 transition-transform">
                 <LayoutDashboard size={28} />
               </div>
-              <h3 className="text-2xl font-bold mb-4">Automatické tabulky</h3>
+              <h3 className="text-2xl font-bold mb-4">{isCS ? "Automatické tabulky" : "Automatic standings"}</h3>
               <p className="text-slate-600 leading-relaxed">
-                Zadejte výsledek a Ligakit okamžitě přepočítá body, skóre i
-                vzájemné zápasy. Podporujeme pavouky, skupiny i dlouhodobé ligy.
+                {isCS
+                  ? "Zadejte výsledek a Ligakit okamžitě přepočítá body, skóre i vzájemné zápasy. Podporujeme pavouky, skupiny i dlouhodobé ligy."
+                  : "Enter a result and Ligakit instantly recalculates points, scores and head-to-head records. Brackets, groups and long-term leagues all supported."}
               </p>
             </div>
 
@@ -268,10 +271,11 @@ export default function HomePage() {
               <div className="w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-orange-100 group-hover:scale-110 transition-transform">
                 <Smartphone size={28} />
               </div>
-              <h3 className="text-2xl font-bold mb-4">Mobilní "Scorer"</h3>
+              <h3 className="text-2xl font-bold mb-4">{isCS ? "Mobilní \"Scorer\"" : "Mobile Scorer"}</h3>
               <p className="text-slate-600 leading-relaxed">
-                Rozhraní pro zapisovatele je navrženo pro práci v terénu. Góly,
-                karty a tresty zapíšete jedním dotykem přímo u hřiště.
+                {isCS
+                  ? "Rozhraní pro zapisovatele je navrženo pro práci v terénu. Góly, karty a tresty zapíšete jedním dotykem přímo u hřiště."
+                  : "The scorer interface is built for pitchside use. Log goals, cards and penalties with a single tap from the sideline."}
               </p>
             </div>
 
@@ -281,8 +285,9 @@ export default function HomePage() {
               </div>
               <h3 className="text-2xl font-bold mb-4">Live Microsite</h3>
               <p className="text-slate-600 leading-relaxed">
-                Každý turnaj dostane svou vlastní profesionální webovou stránku,
-                kterou mohou fanoušci sledovat odkudkoliv na světě.
+                {isCS
+                  ? "Každý turnaj dostane svou vlastní profesionální webovou stránku, kterou mohou fanoušci sledovat odkudkoliv na světě."
+                  : "Every tournament gets its own professional website that fans can follow from anywhere in the world."}
               </p>
             </div>
           </div>
@@ -294,12 +299,12 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
           <div className="space-y-8">
             <h2 className="text-4xl font-bold tracking-tight">
-              Sportovní engine, který se vám přizpůsobí
+              {isCS ? "Sportovní engine, který se vám přizpůsobí" : "A sports engine that adapts to you"}
             </h2>
             <p className="text-lg text-slate-600 leading-relaxed">
-              Nehrajete podle standardních pravidel? Nevadí. Ligakit je
-              stavebnice, kde si definujete hrací dobu, počet částí i bodový
-              systém.
+              {isCS
+                ? "Nehrajete podle standardních pravidel? Nevadí. Ligakit je stavebnice, kde si definujete hrací dobu, počet částí i bodový systém."
+                : "Not playing by standard rules? No problem. Ligakit is a building block where you define playing time, number of periods and the points system."}
             </p>
 
             <div className="space-y-6">
@@ -308,10 +313,9 @@ export default function HomePage() {
                   <Clock size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold">Flexibilní hrací doba</h4>
+                  <h4 className="font-bold">{isCS ? "Flexibilní hrací doba" : "Flexible playing time"}</h4>
                   <p className="text-sm text-slate-500">
-                    Poločasy, třetiny nebo sety. Nastavte si délku každé části
-                    podle svého.
+                    {isCS ? "Poločasy, třetiny nebo sety. Nastavte si délku každé části podle svého." : "Halves, thirds or sets. Set the duration of each period however you like."}
                   </p>
                 </div>
               </div>
@@ -320,10 +324,9 @@ export default function HomePage() {
                   <Users size={20} />
                 </div>
                 <div>
-                  <h4 className="font-bold">Správa soupisek</h4>
+                  <h4 className="font-bold">{isCS ? "Správa soupisek" : "Roster management"}</h4>
                   <p className="text-sm text-slate-500">
-                    Hráči, náhradníci, realizační týmy. Vše přehledně na jednom
-                    místě s historií statistik.
+                    {isCS ? "Hráči, náhradníci, realizační týmy. Vše přehledně na jednom místě s historií statistik." : "Players, substitutes, coaching staff. Everything in one place with full stats history."}
                   </p>
                 </div>
               </div>
@@ -331,7 +334,7 @@ export default function HomePage() {
 
             <div className="pt-4">
               <a href={`/${locale}/docs`} className="flex items-center gap-2 font-bold text-blue-700 hover:gap-4 transition-all">
-                Dokumentace a návody <ChevronRight size={20} />
+                {isCS ? "Dokumentace a návody" : "Docs and guides"} <ChevronRight size={20} />
               </a>
             </div>
           </div>
@@ -339,7 +342,7 @@ export default function HomePage() {
           <div className="bg-white p-4 rounded-[40px] shadow-2xl border border-slate-100 rotate-2">
             <div className="bg-slate-50 rounded-[32px] p-8 space-y-8">
               <div className="flex justify-between items-center">
-                <h3 className="font-bold">Konfigurace Enginu</h3>
+                <h3 className="font-bold">{isCS ? "Konfigurace Enginu" : "Engine Config"}</h3>
                 <Settings className="text-slate-300" />
               </div>
 
@@ -349,7 +352,7 @@ export default function HomePage() {
                     <div className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center text-white font-bold italic">
                       F
                     </div>
-                    <span className="font-bold">Fotbal (Default)</span>
+                    <span className="font-bold">{isCS ? "Fotbal (Default)" : "Football (Default)"}</span>
                   </div>
                   <ChevronDown size={20} className="text-slate-300" />
                 </div>
@@ -357,7 +360,7 @@ export default function HomePage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">
-                      Poločasy
+                      {isCS ? "Poločasy" : "Halves"}
                     </label>
                     <div className="p-4 bg-white rounded-2xl border border-slate-100 font-bold text-center">
                       2
@@ -365,7 +368,7 @@ export default function HomePage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">
-                      Minuty
+                      {isCS ? "Minuty" : "Minutes"}
                     </label>
                     <div className="p-4 bg-white rounded-2xl border border-slate-100 font-bold text-center text-blue-700">
                       45
@@ -375,7 +378,7 @@ export default function HomePage() {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">
-                    Bodování (V/R/P)
+                    {isCS ? "Bodování (V/R/P)" : "Points (W/D/L)"}
                   </label>
                   <div className="flex gap-2">
                     <div className="flex-1 p-4 bg-white rounded-2xl border border-slate-100 font-bold text-center">
@@ -392,7 +395,7 @@ export default function HomePage() {
               </div>
 
               <a href={`/${locale}/competitions/new`} className="block w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-colors text-center">
-                Založit soutěž
+                {isCS ? "Založit soutěž" : "Create competition"}
               </a>
             </div>
           </div>
@@ -407,24 +410,25 @@ export default function HomePage() {
 
           <div className="relative z-10 space-y-8">
             <h2 className="text-4xl md:text-5xl font-black">
-              Připraveni na výkop?
+              {isCS ? "Připraveni na výkop?" : "Ready for kick-off?"}
             </h2>
             <p className="text-blue-100 text-lg max-w-xl mx-auto">
-              Založte svůj první turnaj během 5 minut. Bez poplatků za
-              registraci, s neomezeným počtem diváků.
+              {isCS
+                ? "Založte svůj první turnaj během 5 minut. Bez poplatků za registraci, s neomezeným počtem diváků."
+                : "Create your first tournament in under 5 minutes. Free to sign up, unlimited spectators."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
                 href={`/${locale}/register`}
                 className="bg-white text-blue-700 px-10 py-4 rounded-2xl font-bold text-lg hover:bg-blue-50 transition-all shadow-xl"
               >
-                Založit turnaj zdarma
+                {isCS ? "Založit turnaj zdarma" : "Create tournament for free"}
               </a>
               <a
                 href={`/${locale}/docs`}
                 className="bg-blue-800/50 border border-blue-400/30 text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-blue-800 transition-all"
               >
-                Dokumentace
+                {isCS ? "Dokumentace" : "Documentation"}
               </a>
             </div>
           </div>
@@ -444,26 +448,27 @@ export default function HomePage() {
               </span>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Moderní platforma pro digitální transformaci sportovních událostí.
-              Od amatérů pro profesionály.
+              {isCS
+                ? "Moderní platforma pro digitální transformaci sportovních událostí. Od amatérů pro profesionály."
+                : "A modern platform for the digital transformation of sporting events. From amateurs to professionals."}
             </p>
           </div>
           <div>
-            <h5 className="font-bold mb-6">Platforma</h5>
+            <h5 className="font-bold mb-6">{isCS ? "Platforma" : "Platform"}</h5>
             <ul className="space-y-4 text-sm text-slate-500">
               <li>
                 <a href={`/${locale}/competitions`} className="hover:text-blue-700 transition-colors">
-                  Soutěže
+                  {isCS ? "Soutěže" : "Competitions"}
                 </a>
               </li>
               <li>
                 <a href={`/${locale}/competitions/new`} className="hover:text-blue-700 transition-colors">
-                  Vytvořit soutěž
+                  {isCS ? "Vytvořit soutěž" : "Create competition"}
                 </a>
               </li>
               <li>
                 <a href={`/${locale}/teams`} className="hover:text-blue-700 transition-colors">
-                  Týmy
+                  {isCS ? "Týmy" : "Teams"}
                 </a>
               </li>
               <li>
@@ -474,16 +479,16 @@ export default function HomePage() {
             </ul>
           </div>
           <div>
-            <h5 className="font-bold mb-6">Dokumentace</h5>
+            <h5 className="font-bold mb-6">{isCS ? "Dokumentace" : "Documentation"}</h5>
             <ul className="space-y-4 text-sm text-slate-500">
               <li>
                 <a href={`/${locale}/docs/introduction`} className="hover:text-blue-700 transition-colors">
-                  Úvod
+                  {isCS ? "Úvod" : "Introduction"}
                 </a>
               </li>
               <li>
                 <a href={`/${locale}/docs/quick-start`} className="hover:text-blue-700 transition-colors">
-                  Rychlý start
+                  {isCS ? "Rychlý start" : "Quick start"}
                 </a>
               </li>
               <li>
@@ -493,19 +498,19 @@ export default function HomePage() {
               </li>
               <li>
                 <a href={`/${locale}/docs/account`} className="hover:text-blue-700 transition-colors">
-                  Správa účtu
+                  {isCS ? "Správa účtu" : "Account"}
                 </a>
               </li>
             </ul>
           </div>
         </div>
         <div className="max-w-7xl mx-auto pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-slate-400 font-medium">
-          <p>© {new Date().getFullYear()} Ligakit. Všechna práva vyhrazena.</p>
+          <p>© {new Date().getFullYear()} Ligakit. {isCS ? "Všechna práva vyhrazena." : "All rights reserved."}</p>
           <div className="flex gap-8">
-            <a href={`/${locale}/login`} className="hover:text-blue-700">Přihlásit</a>
-            <a href={`/${locale}/register`} className="hover:text-blue-700">Registrovat</a>
-            <a href={`/${locale}/terms`} className="hover:text-blue-700">Podmínky užití</a>
-            <a href={`/${locale}/privacy`} className="hover:text-blue-700">Soukromí</a>
+            <a href={`/${locale}/login`} className="hover:text-blue-700">{isCS ? "Přihlásit" : "Log in"}</a>
+            <a href={`/${locale}/register`} className="hover:text-blue-700">{isCS ? "Registrovat" : "Register"}</a>
+            <a href={`/${locale}/terms`} className="hover:text-blue-700">{isCS ? "Podmínky užití" : "Terms"}</a>
+            <a href={`/${locale}/privacy`} className="hover:text-blue-700">{isCS ? "Soukromí" : "Privacy"}</a>
             <a href={`/${locale}/cookies`} className="hover:text-blue-700">Cookies</a>
           </div>
         </div>
