@@ -105,6 +105,27 @@ export async function GET(
     if (ct) awayPlayers = ct.guestPlayers.map((p) => ({ ...p, slot: "STARTER" }));
   }
 
+  // Apply SUBSTITUTION events to update player slots
+  const applySubstitutions = (players: RosterPlayer[], side: "HOME" | "AWAY") => {
+    const subs = match.events.filter((e) => e.type === "SUBSTITUTION" && e.teamSide === side);
+    if (subs.length === 0) return players;
+    let result = [...players];
+    for (const ev of subs) {
+      const outName = ev.playerName;
+      const inName  = ev.player2Name;
+      if (!outName || !inName) continue;
+      result = result.map((p) => {
+        if (p.name === outName) return { ...p, slot: "SUBSTITUTE" };
+        if (p.name === inName)  return { ...p, slot: "STARTER" };
+        return p;
+      });
+    }
+    return result;
+  };
+
+  homePlayers = applySubstitutions(homePlayers, "HOME");
+  awayPlayers = applySubstitutions(awayPlayers, "AWAY");
+
   return NextResponse.json({ ...match, homePlayers, awayPlayers, eventTypes }, {
     headers: { "Cache-Control": "no-store" },
   });
