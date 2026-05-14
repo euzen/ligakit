@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   Trophy,
@@ -23,6 +23,9 @@ export default function HomePage() {
   const params = useParams();
   const locale = (params?.locale as string) ?? "cs";
   const isCS = locale === "cs";
+  const otherLocale = isCS ? "en" : "cs";
+  const pathname = usePathname();
+  const pathWithoutLocale = pathname.replace(/^\/(cs|en)/, "") || "/";
 
   const { data: session, status } = useSession();
   const loggedIn = status === "authenticated" && !!session;
@@ -65,6 +68,13 @@ export default function HomePage() {
             </a>
             <a href={`/${locale}/docs`} className="hover:text-blue-700 transition-colors">
               {isCS ? "Dokumentace" : "Docs"}
+            </a>
+            <a
+              href={`/${otherLocale}${pathWithoutLocale}`}
+              className="inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-700 transition-colors"
+            >
+              <Globe size={16} />
+              <span>{otherLocale.toUpperCase()}</span>
             </a>
             <div className="h-6 w-px bg-slate-200" />
             {status !== "loading" && (
