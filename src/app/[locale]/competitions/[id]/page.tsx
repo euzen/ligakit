@@ -377,6 +377,10 @@ export default async function CompetitionDetailPage({
                     competitionId={id}
                     competitionType={competition.type as "LEAGUE" | "CUP" | "TOURNAMENT"}
                     teamCount={competition.teams.length}
+                    teams={competition.teams.map((ct) => ({
+                      id: ct.teamId ?? null,
+                      name: ct.team?.name ?? ct.guestName ?? "?",
+                    }))}
                     hasExistingMatches={competition.matches.length > 0}
                     locale={locale}
                   />

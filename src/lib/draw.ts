@@ -191,6 +191,70 @@ export function generateRoundRobin(
 }
 
 // ─────────────────────────────────────────────
+//  BERGER TABLES (round-robin with fixed seeding)
+//  Teams are pre-assigned seed numbers 1..N.
+//  Team at position N (or N+1 for odd) is fixed;
+//  all others rotate clockwise each round.
+//  BYE is added automatically for odd N.
+// ─────────────────────────────────────────────
+
+/**
+ * Generate a round-robin schedule using Berger tables.
+ * `seededTeams` must be ordered by seed: index 0 = seed 1, index 1 = seed 2, …
+ * Pass teams in any order and provide `seedMap` to override the seed order.
+ */
+export function generateBerger(
+  teams: DrawSlot[],
+  options: { doubleLegs?: boolean; roundOffset?: number } = {},
+): GeneratedMatch[] {
+  const { doubleLegs = false, roundOffset = 0 } = options;
+  const results: GeneratedMatch[] = [];
+
+  // If odd, add a BYE placeholder at the end
+  const slots: (DrawSlot | null)[] = teams.length % 2 === 0
+    ? [...teams]
+    : [...teams, null]; // null = BYE
+
+  const n = slots.length; // always even
+  const rounds = n - 1;
+
+  // The last slot is fixed throughout
+  for (let r = 0; r < rounds; r++) {
+    for (let i = 0; i < n / 2; i++) {
+      const home = slots[i];
+      const away = slots[n - 1 - i];
+      // Skip BYE matchups
+      if (home && away) {
+        results.push(matchFromPair(home, away, r + 1 + roundOffset));
+      }
+    }
+    // Rotate: fix slot[n-1] (last), rotate the rest clockwise
+    // Move last-before-fixed to position 1, shift others right
+    const fixed = slots[n - 1];
+    const rotating = slots.slice(0, n - 1);
+    const last = rotating.pop()!; // take last of rotating
+    rotating.splice(1, 0, last);  // insert at position 1
+    slots.splice(0, n - 1, ...rotating);
+    slots[n - 1] = fixed;
+  }
+
+  if (doubleLegs) {
+    const firstLeg = [...results];
+    firstLeg.forEach((m) => {
+      results.push(
+        matchFromPair(
+          { teamId: m.awayTeamId, teamName: m.awayTeamName ?? "" },
+          { teamId: m.homeTeamId, teamName: m.homeTeamName ?? "" },
+          m.round + rounds,
+        ),
+      );
+    });
+  }
+
+  return results;
+}
+
+// ─────────────────────────────────────────────
 //  SINGLE-ELIMINATION BRACKET
 //  Generates ALL rounds upfront with TBD slots.
 //  bracketPos (0-indexed) identifies each match's

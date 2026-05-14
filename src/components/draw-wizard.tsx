@@ -22,10 +22,16 @@ import {
   type CupAdvancementConfig,
 } from "@/lib/draw";
 
+interface TeamSlot {
+  id: string | null;
+  name: string;
+}
+
 interface DrawWizardProps {
   competitionId: string;
   competitionType: "LEAGUE" | "CUP" | "TOURNAMENT";
   teamCount: number;
+  teams?: TeamSlot[];
   hasExistingMatches: boolean;
   locale: string;
 }
@@ -34,6 +40,7 @@ export function DrawWizard({
   competitionId,
   competitionType,
   teamCount,
+  teams = [],
   hasExistingMatches,
   locale,
 }: DrawWizardProps) {
@@ -50,6 +57,13 @@ export function DrawWizard({
   const [groupDoubleLegs, setGroupDoubleLegs] = useState(false);
   const [clearExisting, setClearExisting] = useState(true);
   const [thirdPlaceMatch, setThirdPlaceMatch] = useState(false);
+
+  // Berger options
+  const [berger, setBerger] = useState(false);
+  const [seedNumbers, setSeedNumbers] = useState<Record<string, number>>({});
+
+  const setSeed = (key: string, val: number) =>
+    setSeedNumbers((prev) => ({ ...prev, [key]: val }));
 
   // CUP advancement options
   const [advancementPreset, setAdvancementPreset] = useState<CupAdvancementPreset>("WINNERS_ONLY");
@@ -104,6 +118,8 @@ export function DrawWizard({
           clearExisting,
           advancementConfig,
           thirdPlaceMatch,
+          berger: competitionType === "LEAGUE" ? berger : false,
+          seedNumbers,
         }),
       });
       const data = await res.json();
@@ -161,12 +177,59 @@ export function DrawWizard({
 
             {/* LEAGUE options */}
             {competitionType === "LEAGUE" && (
-              <ToggleRow
-                id="doubleLegs"
-                label={isCS ? "Doma i venku (2× každý pár)" : "Home & away (2× each pair)"}
-                checked={doubleLegs}
-                onChange={setDoubleLegs}
-              />
+              <div className="space-y-4">
+                <ToggleRow
+                  id="doubleLegs"
+                  label={isCS ? "Doma i venku (2× každý pár)" : "Home & away (2× each pair)"}
+                  checked={doubleLegs}
+                  onChange={setDoubleLegs}
+                />
+                <ToggleRow
+                  id="berger"
+                  label={isCS ? "Bergerovy tabulky (přiřadit čísla týmům)" : "Berger tables (assign seed numbers)"}
+                  checked={berger}
+                  onChange={(v) => { setBerger(v); if (!v) setSeedNumbers({}); }}
+                />
+                {berger && teams.length > 0 && (
+                  <div className="space-y-2 pl-3 border-l-2 border-primary/30">
+                    <p className="text-xs text-muted-foreground">
+                      {isCS
+                        ? "Přiřaďte každému týmu číslo (1 = první v tabulce Bergera). Nepřiřazené týmy dostanou čísla automaticky."
+                        : "Assign a number to each team (1 = first in Berger table). Unassigned teams get numbers automatically."
+                      }
+                    </p>
+                    <div className="grid grid-cols-[1fr_80px] gap-x-3 gap-y-1.5 items-center">
+                      <span className="text-xs font-semibold text-muted-foreground">{isCS ? "Tým" : "Team"}</span>
+                      <span className="text-xs font-semibold text-muted-foreground text-center">{isCS ? "Číslo" : "Seed"}</span>
+                      {teams.map((t) => {
+                        const key = t.id ?? t.name;
+                        return (
+                          <>
+                            <span key={key + "-name"} className="text-sm truncate">{t.name}</span>
+                            <input
+                              key={key + "-input"}
+                              type="number"
+                              min={1}
+                              max={teamCount}
+                              placeholder="—"
+                              value={seedNumbers[key] ?? ""}
+                              onChange={(e) => {
+                                const v = e.target.value === "" ? undefined : Number(e.target.value);
+                                if (v === undefined) {
+                                  setSeedNumbers((prev) => { const n = { ...prev }; delete n[key]; return n; });
+                                } else {
+                                  setSeed(key, v);
+                                }
+                              }}
+                              className="w-full border rounded px-2 py-1 text-sm text-center tabular-nums bg-background"
+                            />
+                          </>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* CUP options */}
