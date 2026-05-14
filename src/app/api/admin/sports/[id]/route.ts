@@ -55,7 +55,7 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    const { name, description, icon, config } = body;
+    const { name, description, icon, config, isActive } = body;
 
     const sport = await prisma.sport.update({
       where: { id },
@@ -64,6 +64,7 @@ export async function PATCH(
         ...(description !== undefined && { description }),
         ...(icon !== undefined && { icon }),
         ...(config !== undefined && { config }),
+        ...(isActive !== undefined && { isActive }),
       }
     });
 

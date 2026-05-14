@@ -33,7 +33,7 @@ export default async function EditCompetitionPage({
   const isOrganizer = competition.organizerId === session.user.id;
   if (!isAdmin && !isOrganizer) redirect(`/${locale}/competitions`);
 
-  const sports = await prisma.sport.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, icon: true } });
+  const sports = await prisma.sport.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true, icon: true } });
 
   return (
     <div className="flex min-h-screen flex-col">

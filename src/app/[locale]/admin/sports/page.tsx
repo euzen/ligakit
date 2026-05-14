@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { Dumbbell, Trophy, Users, ArrowRight, Plus } from "lucide-react";
+import { Dumbbell, Trophy, Users, ArrowRight, Plus, AlertCircle } from "lucide-react";
 import { SportsDocs } from "@/components/sports-docs";
 
 
@@ -85,8 +85,14 @@ export default async function AdminSportsPage({
                           )}
                         </div>
                         <div>
-                          <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                          <CardTitle className="text-lg group-hover:text-primary transition-colors flex items-center gap-2">
                             {sport.name}
+                            {!sport.isActive && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
+                                <AlertCircle className="size-2.5" />
+                                {cs ? "Neaktivní" : "Inactive"}
+                              </span>
+                            )}
                           </CardTitle>
                         </div>
                       </div>

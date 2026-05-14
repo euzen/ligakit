@@ -16,7 +16,7 @@ export default async function NewTeamPage({
   if (!session) redirect(`/${locale}/login`);
 
   const t = await getTranslations("teams");
-  const sports = await prisma.sport.findMany({ orderBy: { name: "asc" } });
+  const sports = await prisma.sport.findMany({ where: { isActive: true }, orderBy: { name: "asc" } });
 
   return (
     <div className="flex min-h-screen flex-col">

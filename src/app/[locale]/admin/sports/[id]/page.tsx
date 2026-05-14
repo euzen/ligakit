@@ -3,10 +3,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/navbar";
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { Dumbbell, Zap, Users, Trophy, ArrowLeft, Edit } from "lucide-react";
+import { Dumbbell, Zap, Users, Trophy, ArrowLeft, Edit, AlertCircle } from "lucide-react";
 import { EventTypesPanel } from "./panels/event-types-panel";
 import { PositionsPanel } from "./panels/positions-panel";
 import { ConfigPanel } from "./panels/config-panel";
+import { ToggleActiveButton } from "./toggle-active-button";
 
 interface PageProps {
   params: Promise<{ locale: string; id: string }>;
@@ -54,18 +55,29 @@ export default async function SportDetailPage({ params }: PageProps) {
                 : <div className="p-3.5 rounded-2xl bg-blue-100"><Dumbbell className="size-7 text-blue-700" /></div>
               }
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-900">{sport.name}</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-extrabold text-slate-900">{sport.name}</h1>
+                  {!sport.isActive && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                      <AlertCircle className="size-3" />
+                      {cs ? "Neaktivní" : "Inactive"}
+                    </span>
+                  )}
+                </div>
                 {sport.description && <p className="text-sm text-slate-500 mt-0.5">{sport.description}</p>}
               </div>
             </div>
           </div>
-          <a
-            href={`/${locale}/admin/sports/${id}/edit`}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:border-blue-700 hover:text-blue-700 shadow-sm transition-all shrink-0"
-          >
-            <Edit className="size-4" />
-            {cs ? "Upravit" : "Edit"}
-          </a>
+          <div className="flex items-center gap-2">
+            <ToggleActiveButton sportId={id} initialIsActive={sport.isActive} cs={cs} />
+            <a
+              href={`/${locale}/admin/sports/${id}/edit`}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 hover:border-blue-700 hover:text-blue-700 shadow-sm transition-all shrink-0"
+            >
+              <Edit className="size-4" />
+              {cs ? "Upravit" : "Edit"}
+            </a>
+          </div>
         </div>
 
         {/* Stats */}

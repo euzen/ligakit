@@ -20,7 +20,7 @@ export default async function EditTeamPage({
       where: { id },
       include: { owner: { select: { id: true, name: true, email: true } } },
     }),
-    prisma.sport.findMany({ orderBy: { name: "asc" } }),
+    prisma.sport.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
   ]);
 
   if (!team) notFound();
