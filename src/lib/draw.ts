@@ -228,12 +228,12 @@ export function generateBerger(
         results.push(matchFromPair(home, away, r + 1 + roundOffset));
       }
     }
-    // Rotate: fix slot[n-1] (last), rotate the rest clockwise
-    // Move last-before-fixed to position 1, shift others right
+    // Rotate: fix slot[n-1], shift the rest one position left
+    // [0,1,2,...,n-2] → [1,2,...,n-2,0]
     const fixed = slots[n - 1];
     const rotating = slots.slice(0, n - 1);
-    const last = rotating.pop()!; // take last of rotating
-    rotating.splice(1, 0, last);  // insert at position 1
+    const first = rotating.shift()!; // take element at position 0
+    rotating.push(first);            // append it at the end
     slots.splice(0, n - 1, ...rotating);
     slots[n - 1] = fixed;
   }
