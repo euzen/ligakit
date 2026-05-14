@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { canManageCompetition } from "@/lib/competition-auth";
 import {
   generateRoundRobin,
-  generateBerger,
   generateBracket,
   generateCup,
   type DrawSlot,
@@ -43,8 +42,6 @@ export async function POST(
     clearExisting = false,
     advancementConfig,
     thirdPlaceMatch = false,
-    berger = false,
-    seedNumbers = {} as Record<string, number>,
   } = body;
 
   const slots: DrawSlot[] = competition.teams.map((ct) => ({
@@ -59,17 +56,7 @@ export async function POST(
   let generatedMatches;
 
   if (competition.type === "LEAGUE") {
-    if (berger) {
-      // Sort slots by assigned seed number; unassigned seeds go to the end
-      const seeded = [...slots].sort((a, b) => {
-        const sa = seedNumbers[a.teamId ?? a.teamName] ?? 999;
-        const sb = seedNumbers[b.teamId ?? b.teamName] ?? 999;
-        return sa - sb;
-      });
-      generatedMatches = generateBerger(seeded, { doubleLegs });
-    } else {
-      generatedMatches = generateRoundRobin(slots, { doubleLegs });
-    }
+    generatedMatches = generateRoundRobin(slots, { doubleLegs });
   } else if (competition.type === "TOURNAMENT") {
     generatedMatches = generateBracket(slots, { thirdPlaceMatch });
     await prisma.competition.update({ where: { id }, data: { thirdPlaceMatch } });
