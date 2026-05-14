@@ -105,16 +105,24 @@ export function CompetitionMatchesManager({
   // Filters
   const [filterRound, setFilterRound] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterTeam, setFilterTeam] = useState<string>("all");
 
   // Bulk date
   const [bulkDate, setBulkDate] = useState("");
   const [isBulkSaving, setIsBulkSaving] = useState(false);
 
   const allRounds = [...new Set(matches.map((m) => m.round ?? 0))].sort((a, b) => a - b);
+  const allTeamNames = [...new Set(matches.flatMap((m) => [
+    resolveTeamName(m, "home"),
+    resolveTeamName(m, "away"),
+  ]))].sort();
 
   const filteredMatches = matches.filter((m) => {
     if (filterRound !== "all" && String(m.round ?? 0) !== filterRound) return false;
     if (filterStatus !== "all" && m.status !== filterStatus) return false;
+    if (filterTeam !== "all") {
+      if (resolveTeamName(m, "home") !== filterTeam && resolveTeamName(m, "away") !== filterTeam) return false;
+    }
     return true;
   });
 
@@ -407,9 +415,24 @@ export function CompetitionMatchesManager({
               ))}
             </SelectContent>
           </Select>
-          {(filterRound !== "all" || filterStatus !== "all") && (
+          {allTeamNames.length > 1 && (
+            <Select value={filterTeam} onValueChange={(v) => setFilterTeam(v ?? "all")}>
+              <SelectTrigger className="h-8 text-xs w-40">
+                <SelectValue>
+                  {filterTeam === "all" ? (isCS ? "Všechny týmy" : "All teams") : filterTeam}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{isCS ? "Všechny týmy" : "All teams"}</SelectItem>
+                {allTeamNames.map((name) => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {(filterRound !== "all" || filterStatus !== "all" || filterTeam !== "all") && (
             <button
-              onClick={() => { setFilterRound("all"); setFilterStatus("all"); }}
+              onClick={() => { setFilterRound("all"); setFilterStatus("all"); setFilterTeam("all"); }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               {isCS ? "Zrušit filtr" : "Clear filter"}
