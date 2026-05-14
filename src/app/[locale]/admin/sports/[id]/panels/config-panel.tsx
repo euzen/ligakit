@@ -9,9 +9,49 @@ interface Props {
   cs: boolean;
 }
 
-const ENGINES = [
-  { key: "football", labelCs: "football – fotbal (GOAL/OWN_GOAL hardcoded)", labelEn: "football – football engine (GOAL/OWN_GOAL hardcoded)" },
-  { key: "generic",  labelCs: "generic – libovolný sport (hodnoty z EventType)",  labelEn: "generic – any sport (values from EventType records)" },
+const PRESETS: { icon: string; labelCs: string; labelEn: string; config: object }[] = [
+  {
+    icon: "⚽",
+    labelCs: "Fotbal",
+    labelEn: "Football",
+    config: { engine: "football", periods: 2, periodDuration: 45, winPoints: 3, drawPoints: 1, lossPoints: 0, overtimeAllowed: false },
+  },
+  {
+    icon: "🏒",
+    labelCs: "Hokej",
+    labelEn: "Ice Hockey",
+    config: { engine: "generic", periods: 3, periodDuration: 20, winPoints: 3, drawPoints: 2, lossPoints: 1, overtimeAllowed: true, tiebreak: "extra_time" },
+  },
+  {
+    icon: "🏀",
+    labelCs: "Basketbal",
+    labelEn: "Basketball",
+    config: { engine: "generic", periods: 4, periodDuration: 10, winPoints: 2, drawPoints: 0, lossPoints: 1, overtimeAllowed: true },
+  },
+  {
+    icon: "🏐",
+    labelCs: "Volejbal",
+    labelEn: "Volleyball",
+    config: { engine: "generic", periods: 5, periodDuration: 0, winPoints: 3, drawPoints: 2, lossPoints: 1, overtimeAllowed: false },
+  },
+  {
+    icon: "🏃",
+    labelCs: "Futsal",
+    labelEn: "Futsal",
+    config: { engine: "football", periods: 2, periodDuration: 20, winPoints: 3, drawPoints: 1, lossPoints: 0, overtimeAllowed: false },
+  },
+  {
+    icon: "🏉",
+    labelCs: "Ragby",
+    labelEn: "Rugby",
+    config: { engine: "generic", periods: 2, periodDuration: 40, winPoints: 4, drawPoints: 2, lossPoints: 0, overtimeAllowed: false },
+  },
+  {
+    icon: "🎯",
+    labelCs: "Obecný",
+    labelEn: "Generic",
+    config: { engine: "generic", periods: 2, periodDuration: 0, winPoints: 3, drawPoints: 1, lossPoints: 0, overtimeAllowed: false },
+  },
 ];
 
 export function ConfigPanel({ sportId, initialConfig, cs }: Props) {
@@ -43,14 +83,8 @@ export function ConfigPanel({ sportId, initialConfig, cs }: Props) {
     }
   };
 
-  const injectEngine = (key: string) => {
-    try {
-      const parsed = config.trim() ? JSON.parse(config) : {};
-      parsed.engine = key;
-      setConfig(JSON.stringify(parsed, null, 2));
-    } catch {
-      setConfig(JSON.stringify({ engine: key }, null, 2));
-    }
+  const injectPreset = (preset: object) => {
+    setConfig(JSON.stringify(preset, null, 2));
   };
 
   return (
@@ -63,16 +97,17 @@ export function ConfigPanel({ sportId, initialConfig, cs }: Props) {
       <div className="p-6 space-y-4">
         {/* Quick engine selector */}
         <div>
-          <p className="text-xs font-semibold text-slate-600 mb-2">{cs ? "Rychlý výběr enginu:" : "Quick engine select:"}</p>
+          <p className="text-xs font-semibold text-slate-600 mb-2">{cs ? "Rychlé přednastavení:" : "Quick preset:"}</p>
           <div className="flex flex-wrap gap-2">
-            {ENGINES.map((e) => (
+            {PRESETS.map((p) => (
               <button
-                key={e.key}
+                key={p.labelEn}
                 type="button"
-                onClick={() => injectEngine(e.key)}
-                className="h-7 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all"
+                onClick={() => injectPreset(p.config)}
+                className="inline-flex items-center gap-1.5 h-7 px-3 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:border-blue-700 hover:text-blue-700 transition-all"
               >
-                {e.key}
+                <span>{p.icon}</span>
+                {cs ? p.labelCs : p.labelEn}
               </button>
             ))}
           </div>
@@ -90,7 +125,7 @@ export function ConfigPanel({ sportId, initialConfig, cs }: Props) {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {[
-                ["engine",           "football | generic",     cs ? "Výpočetní engine"            : "Scoring engine"],
+                ["engine",           "football | generic",       cs ? "Výpočetní engine"            : "Scoring engine"],
                 ["periods",          "2, 3, 4…",               cs ? "Počet poločasů/třetin"        : "Number of periods"],
                 ["periodDuration",   "45, 20, 10…",            cs ? "Délka periody v minutách"     : "Period duration in minutes"],
                 ["overtimeAllowed",  "true | false",           cs ? "Povolit prodloužení"          : "Allow overtime"],
