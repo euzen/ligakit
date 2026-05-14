@@ -218,37 +218,97 @@ export function generateBerger(
   const n = slots.length; // always even
   const rounds = n - 1;
 
-  // The last slot is fixed throughout
-  for (let r = 0; r < rounds; r++) {
-    for (let i = 0; i < n / 2; i++) {
-      const home = slots[i];
-      const away = slots[n - 1 - i];
-      // Skip BYE matchups
-      if (home && away) {
-        results.push(matchFromPair(home, away, r + 1 + roundOffset));
+  // Berger tables – exact pattern from Czech reference tables.
+  // Teams are numbered 1..n in `slots` (index 0 = team 1, index n-1 = team n = ω fixed).
+  // slot(k) returns the DrawSlot for 1-based team number k.
+  const slot = (k: number) => slots[k - 1]!;
+  const m = n - 1; // modulus
+
+  // Modular helper: maps 1-based team number through mod-(n-1) arithmetic.
+  // Numbers 1..n-1 rotate; n (ω) is fixed.
+  const mod1 = (x: number) => ((x - 1 + m) % m) + 1; // keeps result in 1..n-1
+
+  const emitPair = (home: DrawSlot | null, away: DrawSlot | null, round: number) => {
+    if (home && away) results.push(matchFromPair(home, away, round));
+  };
+
+  // Pattern (1-indexed rounds, 1-indexed teams, n = even):
+  //
+  // Odd round  r = 2k-1  (k=1,2,3,…):
+  //   pair 0 : k  : n
+  //   pair i>0: mod1(k+i) : mod1(k-i)
+  //
+  // Even round r = 2k  (k=1,2,3,…):
+  //   pair 0 : n  : mod1(n/2 + k)
+  //   pair i>0: mod1(n/2+k-i) : mod1(n/2+k+i)   [left > right in ref tables]
+  //   BUT last pair is always: 1 : 2  when k=1, 1:4/2:3... 
+  //   Actually even rounds simply have n on left and the rest fills in.
+  //
+  // Observed pattern for even rounds from tables (n=6, k=1→K2: 6:4,5:3,1:2):
+  //   pair 0: n : mod1(n/2+k)           = 6:mod1(3+1)=6:4  ✓
+  //   pair 1: mod1(n/2+k-1): mod1(n/2+k+1) = mod1(3):mod1(5) = 3... wait
+  //
+  // Re-derive directly from the table for n=6:
+  //   K2: 6:4, 5:3, 1:2
+  //   K4: 6:5, 1:4, 2:3
+  //   K6 (n=8): 8:5,6:4,7:3,1:2  → n:n/2+1, then descending/ascending
+  //
+  // For even round r=2k:
+  //   pair 0: n : mod1(n/2 + k)
+  //   pair j (j=1..n/2-1): mod1(n/2+k-j) : mod1(n/2+k+j)
+  //   EXCEPT last pair is always 1:2 when all others filled...
+  //   Actually: mod1(n/2+k-j) for j up to n/2-1 wraps around correctly.
+
+  const runLeg = (flip: boolean, roundStart: number) => {
+    for (let r = 1; r <= rounds; r++) {
+      const roundNo = roundStart + r - 1;
+
+      if (r % 2 === 1) {
+        // Odd round: k = (r+1)/2
+        const k = (r + 1) / 2;
+        // pair 0: k vs n  →  k is home
+        emitPair(
+          flip ? slot(n) : slot(k),
+          flip ? slot(k) : slot(n),
+          roundNo,
+        );
+        // pairs 1..n/2-1
+        for (let i = 1; i < n / 2; i++) {
+          const left  = mod1(k + i);
+          const right = mod1(k - i);
+          emitPair(
+            flip ? slot(right) : slot(left),
+            flip ? slot(left)  : slot(right),
+            roundNo,
+          );
+        }
+      } else {
+        // Even round: k = r/2
+        const k = r / 2;
+        const base = mod1(n / 2 + k);
+        // pair 0: n vs base  →  n is home
+        emitPair(
+          flip ? slot(base) : slot(n),
+          flip ? slot(n)    : slot(base),
+          roundNo,
+        );
+        // pairs 1..n/2-1: in even rounds the higher-index side is home
+        for (let i = 1; i < n / 2; i++) {
+          const left  = mod1(n / 2 + k - i);
+          const right = mod1(n / 2 + k + i);
+          emitPair(
+            flip ? slot(left)  : slot(right),
+            flip ? slot(right) : slot(left),
+            roundNo,
+          );
+        }
       }
     }
-    // Rotate: fix slot[n-1], shift the rest one position left
-    // [0,1,2,...,n-2] → [1,2,...,n-2,0]
-    const fixed = slots[n - 1];
-    const rotating = slots.slice(0, n - 1);
-    const first = rotating.shift()!; // take element at position 0
-    rotating.push(first);            // append it at the end
-    slots.splice(0, n - 1, ...rotating);
-    slots[n - 1] = fixed;
-  }
+  };
 
+  runLeg(false, 1 + roundOffset);
   if (doubleLegs) {
-    const firstLeg = [...results];
-    firstLeg.forEach((m) => {
-      results.push(
-        matchFromPair(
-          { teamId: m.awayTeamId, teamName: m.awayTeamName ?? "" },
-          { teamId: m.homeTeamId, teamName: m.homeTeamName ?? "" },
-          m.round + rounds,
-        ),
-      );
-    });
+    runLeg(true, rounds + 1 + roundOffset);
   }
 
   return results;
