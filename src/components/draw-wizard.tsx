@@ -58,6 +58,12 @@ export function DrawWizard({
   const [clearExisting, setClearExisting] = useState(true);
   const [thirdPlaceMatch, setThirdPlaceMatch] = useState(false);
 
+  // Date scheduling options
+  const [scheduleDates, setScheduleDates] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [kickoffTime, setKickoffTime] = useState("15:00");
+  const [intervalDays, setIntervalDays] = useState(7);
+
   // CUP advancement options
   const [advancementPreset, setAdvancementPreset] = useState<CupAdvancementPreset>("WINNERS_ONLY");
   const [teamsPerGroup, setTeamsPerGroup] = useState(1);
@@ -111,6 +117,7 @@ export function DrawWizard({
           clearExisting,
           advancementConfig,
           thirdPlaceMatch,
+          ...(scheduleDates && startDate ? { startDate, kickoffTime, intervalDays } : {}),
         }),
       });
       const data = await res.json();
@@ -332,6 +339,57 @@ export function DrawWizard({
                 />
               </div>
             )}
+
+            {/* Date scheduling */}
+            <div className="space-y-3 rounded-lg border p-3">
+              <ToggleRow
+                id="scheduleDates"
+                label={isCS ? "Nastavit datumy kol" : "Schedule round dates"}
+                checked={scheduleDates}
+                onChange={setScheduleDates}
+              />
+              {scheduleDates && (
+                <div className="space-y-2 pl-1">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">{isCS ? "Datum 1. kola" : "First round date"}</Label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full h-8 rounded-md border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">{isCS ? "Čas výkopu" : "Kickoff time"}</Label>
+                      <input
+                        type="time"
+                        value={kickoffTime}
+                        onChange={(e) => setKickoffTime(e.target.value)}
+                        className="w-full h-8 rounded-md border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isCS ? "Interval mezi koly" : "Interval between rounds"}</Label>
+                    <div className="flex gap-2">
+                      {[7, 14, 21].map((d) => (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => setIntervalDays(d)}
+                          className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                            intervalDays === d ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
+                          }`}
+                        >
+                          {d} {isCS ? "dní" : "days"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Clear existing */}
             {hasExistingMatches && (

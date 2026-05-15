@@ -42,7 +42,24 @@ export async function POST(
     clearExisting = false,
     advancementConfig,
     thirdPlaceMatch = false,
+    startDate,
+    kickoffTime = "15:00",
+    intervalDays = 7,
   } = body;
+
+  // Build a round→Date map if date scheduling is requested
+  const roundDateMap = new Map<number, Date>();
+  if (startDate) {
+    const [h, min] = (kickoffTime as string).split(":").map(Number);
+    const base = new Date(startDate as string);
+    base.setHours(h ?? 15, min ?? 0, 0, 0);
+    // Pre-fill up to 50 rounds
+    for (let r = 1; r <= 50; r++) {
+      const d = new Date(base);
+      d.setDate(d.getDate() + (r - 1) * (intervalDays as number));
+      roundDateMap.set(r, d);
+    }
+  }
 
   const slots: DrawSlot[] = competition.teams.map((ct) => ({
     teamId: ct.teamId ?? null,
@@ -106,6 +123,7 @@ export async function POST(
       bracketPos: m.bracketPos ?? null,
       note: m.group ? `Skupina ${m.group}` : m.stage ?? null,
       status: "SCHEDULED" as const,
+      scheduledAt: m.round && roundDateMap.has(m.round) ? roundDateMap.get(m.round) : null,
     })),
   });
 

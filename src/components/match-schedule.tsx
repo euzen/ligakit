@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CalendarDays, Clock, Radio } from "lucide-react";
+import { CalendarDays, Clock, Radio, MapPin, Shuffle, Presentation, LayoutGrid } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface ScheduleMatch {
@@ -18,11 +18,14 @@ interface ScheduleMatch {
   status: string;
   scheduledAt: Date | string | null;
   matchState?: string | null;
+  venue?: string | null;
 }
 
 interface MatchScheduleProps {
   matches: ScheduleMatch[];
   locale: string;
+  canManage?: boolean;
+  onRequestDraw?: () => void;
 }
 
 function teamName(m: ScheduleMatch, side: "home" | "away") {
@@ -90,7 +93,7 @@ function StatusBadge({ status, matchState, isCS }: { status: string; matchState?
   return <Badge variant="secondary" className="text-xs px-1.5 py-0">{isCS ? "Plánováno" : "Scheduled"}</Badge>;
 }
 
-export function MatchSchedule({ matches, locale }: MatchScheduleProps) {
+export function MatchSchedule({ matches, locale, canManage, onRequestDraw }: MatchScheduleProps) {
   const isCS = locale === "cs";
 
   // Filter state
@@ -155,9 +158,31 @@ export function MatchSchedule({ matches, locale }: MatchScheduleProps) {
   }, [filtered]);
 
   if (matches.length === 0) {
+    if (canManage) {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10 text-center">
+          <div className="p-3 rounded-2xl bg-muted">
+            <CalendarDays className="size-7 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-semibold text-sm">{isCS ? "Zatím žádné zápasy" : "No matches yet"}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{isCS ? "Vygeneruj rozlosování jedním kliknutím" : "Generate the schedule in one click"}</p>
+          </div>
+          {onRequestDraw && (
+            <button
+              onClick={onRequestDraw}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              <Shuffle className="size-3.5" />
+              {isCS ? "Spustit losování" : "Run draw"}
+            </button>
+          )}
+        </div>
+      );
+    }
     return (
       <p className="text-center text-muted-foreground py-8 text-sm">
-        {isCS ? "Žádné zápasy nejsou naplánované." : "No matches scheduled."}
+        {isCS ? "Zápasy budou zveřejněny po vygenerování rozlosování." : "Matches will appear once the schedule is generated."}
       </p>
     );
   }
@@ -289,60 +314,86 @@ function MatchRow({ match: m, isCS, locale }: { match: ScheduleMatch; isCS: bool
       }`}
     >
       {/* Desktop layout */}
-      <div className="hidden sm:grid sm:grid-cols-[64px_1fr_auto_1fr_auto] items-center gap-3 px-4 py-3">
-        {/* Time */}
-        <span className={`text-sm font-bold tabular-nums ${isLive ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
-          {isLive ? "LIVE" : (time ?? "—")}
-        </span>
+      <div className="hidden sm:block px-4 py-3">
+        <div className="grid grid-cols-[64px_1fr_auto_1fr_auto] items-center gap-3">
+          {/* Time */}
+          <span className={`text-sm font-bold tabular-nums ${isLive ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
+            {isLive ? "LIVE" : (time ?? "—")}
+          </span>
 
-        {/* Home team */}
-        <span className={`flex items-center justify-end gap-1.5 text-sm truncate ${homeWon ? "font-semibold" : ""}`}>
-          {home}
-          <TeamLogo url={teamLogo(m, "home")} name={home} />
-        </span>
+          {/* Home team */}
+          <span className={`flex items-center justify-end gap-1.5 text-sm truncate ${homeWon ? "font-semibold" : ""}`}>
+            {home}
+            <TeamLogo url={teamLogo(m, "home")} name={home} />
+          </span>
 
-        {/* Score / VS */}
-        <div className="flex items-center gap-1.5 min-w-[72px] justify-center">
-          {isPlayed ? (
-            <>
-              <span className={`text-lg font-black tabular-nums w-6 text-center ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>
-                {m.homeScore}
-              </span>
-              <span className="text-muted-foreground font-bold">:</span>
-              <span className={`text-lg font-black tabular-nums w-6 text-center ${awayWon ? "text-foreground" : "text-muted-foreground"}`}>
-                {m.awayScore}
-              </span>
-            </>
-          ) : (
-            <span className="text-sm text-muted-foreground font-medium">vs</span>
-          )}
+          {/* Score / VS */}
+          <div className="flex items-center gap-1.5 min-w-[72px] justify-center">
+            {isPlayed ? (
+              <>
+                <span className={`text-lg font-black tabular-nums w-6 text-center ${homeWon ? "text-foreground" : "text-muted-foreground"}`}>
+                  {m.homeScore}
+                </span>
+                <span className="text-muted-foreground font-bold">:</span>
+                <span className={`text-lg font-black tabular-nums w-6 text-center ${awayWon ? "text-foreground" : "text-muted-foreground"}`}>
+                  {m.awayScore}
+                </span>
+              </>
+            ) : (
+              <span className="text-sm text-muted-foreground font-medium">vs</span>
+            )}
+          </div>
+
+          {/* Away team */}
+          <span className={`flex items-center gap-1.5 text-sm truncate ${awayWon ? "font-semibold" : ""}`}>
+            <TeamLogo url={teamLogo(m, "away")} name={away} />
+            {away}
+          </span>
+
+          {/* Status + label + links */}
+          <div className="flex flex-col items-end gap-1 min-w-[80px]">
+            <StatusBadge status={m.status} matchState={m.matchState} isCS={isCS} />
+            {label && (
+              <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
+            )}
+            <div className="flex flex-col gap-0.5 mt-0.5">
+              <a
+                href={`/${locale}/matches/${m.id}/presentation`}
+                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                title={isCS ? "Prezentace zápasu" : "Match presentation"}
+              >
+                <Presentation size={9} />
+                {isCS ? "Prezentace" : "Report"}
+              </a>
+              <a
+                href={`/${locale}/matches/${m.id}/scoreboard`}
+                className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
+                title={isCS ? "Scoreboard" : "Scoreboard"}
+              >
+                <LayoutGrid size={9} />
+                Scoreboard
+              </a>
+            </div>
+          </div>
         </div>
-
-        {/* Away team */}
-        <span className={`flex items-center gap-1.5 text-sm truncate ${awayWon ? "font-semibold" : ""}`}>
-          <TeamLogo url={teamLogo(m, "away")} name={away} />
-          {away}
-        </span>
-
-        {/* Status + label */}
-        <div className="flex flex-col items-end gap-1 min-w-[80px]">
-          <StatusBadge status={m.status} matchState={m.matchState} isCS={isCS} />
-          {label && (
-            <span className="text-xs text-muted-foreground whitespace-nowrap">{label}</span>
-          )}
-        </div>
+        {m.venue && (
+          <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground pl-[76px]">
+            <MapPin className="size-3 shrink-0" />
+            {m.venue}
+          </div>
+        )}
       </div>
 
       {/* Mobile layout */}
       <div className="sm:hidden px-3 py-2.5 space-y-1.5">
         <div className="flex items-center justify-between gap-2">
-          <span className={`text-xs font-bold ${isLive ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
-            {isLive ? "LIVE" : (time ?? "—")}
-          </span>
-          <div className="flex items-center gap-1.5">
-            <StatusBadge status={m.status} matchState={m.matchState} isCS={isCS} />
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-bold ${isLive ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
+              {isLive ? "LIVE" : (time ?? "—")}
+            </span>
             {label && <span className="text-xs text-muted-foreground">{label}</span>}
           </div>
+          <StatusBadge status={m.status} matchState={m.matchState} isCS={isCS} />
         </div>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
           <span className={`flex items-center gap-1.5 text-sm truncate ${homeWon ? "font-semibold" : ""}`}>
@@ -360,6 +411,31 @@ function MatchRow({ match: m, isCS, locale }: { match: ScheduleMatch; isCS: bool
             {away}
             <TeamLogo url={teamLogo(m, "away")} name={away} />
           </span>
+        </div>
+        {m.venue && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="size-3 shrink-0" />
+            {m.venue}
+          </div>
+        )}
+        {/* Links mobile */}
+        <div className="flex items-center justify-center gap-3">
+          <a
+            href={`/${locale}/matches/${m.id}/presentation`}
+            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+            title={isCS ? "Prezentace zápasu" : "Match presentation"}
+          >
+            <Presentation size={9} />
+            {isCS ? "Prezentace" : "Report"}
+          </a>
+          <a
+            href={`/${locale}/matches/${m.id}/scoreboard`}
+            className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors"
+            title={isCS ? "Scoreboard" : "Scoreboard"}
+          >
+            <LayoutGrid size={9} />
+            Scoreboard
+          </a>
         </div>
       </div>
     </div>

@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Trash2, Plus, Check, X, Loader2, Calendar, Tv, Pencil } from "lucide-react";
+import { Trash2, Plus, Check, X, Loader2, Calendar, Tv, Pencil, Shuffle, CalendarDays, Presentation, LayoutGrid } from "lucide-react";
 
 function toLocalDatetimeInput(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -43,6 +43,7 @@ interface Match {
   scheduledAt: Date | null;
   round: number | null;
   note: string | null;
+  venue?: string | null;
 }
 
 interface CompetitionMatchesManagerProps {
@@ -167,6 +168,7 @@ export function CompetitionMatchesManager({
   const [editStatus, setEditStatus] = useState<string>("SCHEDULED");
   const [editDate, setEditDate] = useState("");
   const [editRound, setEditRound] = useState("");
+  const [editVenue, setEditVenue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const startEdit = (m: Match) => {
@@ -176,6 +178,7 @@ export function CompetitionMatchesManager({
     setEditStatus(m.status);
     setEditDate(m.scheduledAt ? toLocalDatetimeInput(new Date(m.scheduledAt)) : "");
     setEditRound(m.round !== null ? String(m.round) : "");
+    setEditVenue(m.venue ?? "");
   };
 
   const slotToPayload = (slotId: string) => {
@@ -224,6 +227,7 @@ export function CompetitionMatchesManager({
           status: editStatus,
           scheduledAt: editDate || null,
           round: editRound ? Number(editRound) : null,
+          venue: editVenue || null,
         }),
       });
       const data = await res.json();
@@ -464,9 +468,27 @@ export function CompetitionMatchesManager({
 
       {/* Matches */}
       {filteredMatches.length === 0 ? (
-        <p className="text-center text-muted-foreground py-8 text-sm">
-          {matches.length === 0 ? t("noMatches") : (isCS ? "Žádné zápasy neodpovídají filtru" : "No matches match the filter")}
-        </p>
+        matches.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <div className="p-3 rounded-2xl bg-muted">
+              <CalendarDays className="size-7 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">{isCS ? "Zatím žádné zápasy" : "No matches yet"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {isCS ? "Klikni na \"Losovat\" v horní části stránky a vygeneruj rozlosování automaticky." : "Click \"Draw\" at the top of the page to generate the schedule automatically."}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Shuffle className="size-3.5" />
+              {isCS ? "Nebo přidej zápasy ručně pomocí formuláře níže" : "Or add matches manually using the form below"}
+            </div>
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground py-8 text-sm">
+            {isCS ? "Žádné zápasy neodpovídají filtru" : "No matches match the filter"}
+          </p>
+        )
       ) : (
         Object.entries(grouped)
           .sort(([a], [b]) => Number(a) - Number(b))
@@ -513,6 +535,7 @@ export function CompetitionMatchesManager({
                           <Input type="datetime-local" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="h-8 text-xs" />
                           <Input type="number" min={1} value={editRound} onChange={(e) => setEditRound(e.target.value)} className="h-8 text-xs" placeholder={t("round")} />
                         </div>
+                        <Input value={editVenue} onChange={(e) => setEditVenue(e.target.value)} className="h-8 text-xs" placeholder={isCS ? "Místo konání (hřiště, adresa…)" : "Venue (pitch, address…)"} />
                         <div className="flex justify-end gap-2">
                           <button onClick={() => setEditingId(null)} className="inline-flex items-center justify-center size-8 rounded-md border hover:bg-muted transition-colors">
                             <X className="size-4" />
@@ -561,6 +584,24 @@ export function CompetitionMatchesManager({
                           {t(`matchStatus${m.status}`)}
                         </Badge>
                         <div className="flex gap-1 shrink-0">
+                          <a
+                            href={`/${locale}/matches/${m.id}/presentation`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={isCS ? "Prezentace zápasu" : "Match presentation"}
+                            className="inline-flex items-center justify-center size-7 rounded hover:bg-muted transition-colors text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                          >
+                            <Presentation className="size-3.5" />
+                          </a>
+                          <a
+                            href={`/${locale}/matches/${m.id}/scoreboard`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={isCS ? "Scoreboard" : "Scoreboard"}
+                            className="inline-flex items-center justify-center size-7 rounded hover:bg-muted transition-colors text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
+                          >
+                            <LayoutGrid className="size-3.5" />
+                          </a>
                           <a
                             href={`/${locale}/matches/${m.id}/control`}
                             target="_blank"

@@ -21,16 +21,62 @@ export async function GET(
   if (!isManager && !tokenSide)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const lineup = await prisma.matchPlayer.findMany({
-    where: { matchId: id },
-    include: {
-      player: { select: { id: true, name: true, number: true, position: { select: { id: true, name: true, labelCs: true, labelEn: true } } } },
-      guestPlayer: { select: { id: true, name: true, number: true } },
-    },
-    orderBy: [{ slot: "asc" }, { shirtNumber: "asc" }],
-  });
+  const [lineup, match] = await Promise.all([
+    prisma.matchPlayer.findMany({
+      where: { matchId: id },
+      include: {
+        player: { select: { id: true, name: true, number: true, position: { select: { id: true, name: true, labelCs: true, labelEn: true } } } },
+        guestPlayer: { select: { id: true, name: true, number: true } },
+      },
+      orderBy: [{ slot: "asc" }, { shirtNumber: "asc" }],
+    }),
+    prisma.match.findUnique({
+      where: { id },
+      select: {
+        homeFormation: true,
+        awayFormation: true,
+        homeLineupPositions: true,
+        awayLineupPositions: true,
+      },
+    }),
+  ]);
 
-  return NextResponse.json(lineup);
+  // Build player lookup map for enriching positions
+  const playerMap = new Map<string, { name: string; number: number | null }>();
+  for (const mp of lineup) {
+    if (mp.player) {
+      playerMap.set(mp.player.id, { name: mp.player.name, number: mp.player.number });
+    }
+    if (mp.guestPlayer) {
+      playerMap.set(mp.guestPlayer.id, { name: mp.guestPlayer.name, number: mp.guestPlayer.number });
+    }
+  }
+
+  // Enrich positions with player names
+  const enrichPositions = (positions: Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}> | null) => {
+    if (!positions) return [];
+    return positions.map((p) => {
+      const playerId = p.playerId ?? p.guestPlayerId;
+      const player = playerId ? playerMap.get(playerId) : null;
+      return {
+        ...p,
+        name: player?.name ?? "",
+        number: player?.number ?? null,
+      };
+    });
+  };
+
+  return NextResponse.json({
+    players: lineup,
+    formations: {
+      home: match?.homeFormation ?? null,
+      away: match?.awayFormation ?? null,
+    },
+    positions: {
+      home: enrichPositions(match?.homeLineupPositions as Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}>),
+      away: enrichPositions(match?.awayLineupPositions as Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}>),
+    },
+  });
 }
 
 // PUT — replaces full lineup for one side (or both)
@@ -82,20 +128,87 @@ export async function PUT(
     ...sides.map((side) =>
       prisma.matchPlayer.deleteMany({ where: { matchId: id, teamSide: side } })
     ),
-    prisma.matchPlayer.createMany({ data: homePlayers.map((p) => toRow(p, "HOME")) }),
-    prisma.matchPlayer.createMany({ data: awayPlayers.map((p) => toRow(p, "AWAY")) }),
   ];
 
-  await prisma.$transaction(ops);
+  // Only add createMany if there are players to create
+  if (homePlayers.length > 0) {
+    ops.push(prisma.matchPlayer.createMany({ data: homePlayers.map((p) => toRow(p, "HOME")) }));
+  }
+  if (awayPlayers.length > 0) {
+    ops.push(prisma.matchPlayer.createMany({ data: awayPlayers.map((p) => toRow(p, "AWAY")) }));
+  }
 
-  const lineup = await prisma.matchPlayer.findMany({
-    where: { matchId: id },
-    include: {
-      player: { select: { id: true, name: true, number: true, position: { select: { id: true, name: true, labelCs: true, labelEn: true } } } },
-      guestPlayer: { select: { id: true, name: true, number: true } },
+  // Run lineup changes in transaction (or directly if no ops)
+  if (ops.length > 0) {
+    await prisma.$transaction(ops);
+  }
+
+  // Update formations separately (outside transaction to avoid type issues)
+  if (body.homeFormation !== undefined || body.awayFormation !== undefined ||
+      body.homePositions !== undefined || body.awayPositions !== undefined) {
+    const updateData: Record<string, unknown> = {};
+    if (body.homeFormation !== undefined) updateData.homeFormation = body.homeFormation || null;
+    if (body.awayFormation !== undefined) updateData.awayFormation = body.awayFormation || null;
+    if (body.homePositions !== undefined) updateData.homeLineupPositions = body.homePositions || null;
+    if (body.awayPositions !== undefined) updateData.awayLineupPositions = body.awayPositions || null;
+    
+    await prisma.match.update({ where: { id }, data: updateData });
+  }
+
+  const [updatedLineup, updatedMatch] = await Promise.all([
+    prisma.matchPlayer.findMany({
+      where: { matchId: id },
+      include: {
+        player: { select: { id: true, name: true, number: true, position: { select: { id: true, name: true, labelCs: true, labelEn: true } } } },
+        guestPlayer: { select: { id: true, name: true, number: true } },
+      },
+      orderBy: [{ slot: "asc" }, { shirtNumber: "asc" }],
+    }),
+    prisma.match.findUnique({
+      where: { id },
+      select: {
+        homeFormation: true,
+        awayFormation: true,
+        homeLineupPositions: true,
+        awayLineupPositions: true,
+      },
+    }),
+  ]);
+
+  // Build player lookup map for enriching positions
+  const playerMap = new Map<string, { name: string; number: number | null }>();
+  for (const mp of updatedLineup) {
+    if (mp.player) {
+      playerMap.set(mp.player.id, { name: mp.player.name, number: mp.player.number });
+    }
+    if (mp.guestPlayer) {
+      playerMap.set(mp.guestPlayer.id, { name: mp.guestPlayer.name, number: mp.guestPlayer.number });
+    }
+  }
+
+  // Enrich positions with player names
+  const enrichPositions = (positions: Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}> | null) => {
+    if (!positions) return [];
+    return positions.map((p) => {
+      const playerId = p.playerId ?? p.guestPlayerId;
+      const player = playerId ? playerMap.get(playerId) : null;
+      return {
+        ...p,
+        name: player?.name ?? "",
+        number: player?.number ?? null,
+      };
+    });
+  };
+
+  return NextResponse.json({
+    players: updatedLineup,
+    formations: {
+      home: updatedMatch?.homeFormation ?? null,
+      away: updatedMatch?.awayFormation ?? null,
     },
-    orderBy: [{ slot: "asc" }, { shirtNumber: "asc" }],
+    positions: {
+      home: enrichPositions(updatedMatch?.homeLineupPositions as Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}>),
+      away: enrichPositions(updatedMatch?.awayLineupPositions as Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}>),
+    },
   });
-
-  return NextResponse.json(lineup);
 }

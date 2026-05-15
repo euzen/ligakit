@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Trophy, Sun, Moon, CalendarDays, Clock, Radio } from "lucide-react";
+import { Trophy, Sun, Moon, CalendarDays, Clock, Radio, Presentation, LayoutGrid } from "lucide-react";
 
 interface ScheduleMatch {
   id: string;
@@ -427,6 +427,25 @@ function MatchRow({
               {isCS ? "Plánováno" : "Scheduled"}
             </span>
           )}
+          {/* Presentation & Scoreboard links */}
+          <div className="flex flex-col gap-0.5 mt-1">
+            <a
+              href={`/${locale}/matches/${m.id}/presentation`}
+              className={`text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors hover:opacity-100 opacity-70 ${dark ? "text-blue-400" : "text-blue-600"}`}
+              title={isCS ? "Prezentace zápasu" : "Match presentation"}
+            >
+              <Presentation size={10} />
+              {isCS ? "Prezentace" : "Report"}
+            </a>
+            <a
+              href={`/${locale}/matches/${m.id}/scoreboard`}
+              className={`text-[9px] font-bold uppercase tracking-widest flex items-center gap-1 transition-colors hover:opacity-100 opacity-70 ${dark ? "text-emerald-400" : "text-emerald-600"}`}
+              title={isCS ? "Scoreboard" : "Scoreboard"}
+            >
+              <LayoutGrid size={10} />
+              Scoreboard
+            </a>
+          </div>
         </div>
       </div>
 
@@ -493,6 +512,25 @@ function MatchRow({
                 : <Trophy size={10} className="text-orange-500 opacity-50" />}
             </div>
           </div>
+        </div>
+        {/* Links mobile */}
+        <div className="flex items-center justify-center gap-3">
+          <a
+            href={`/${locale}/matches/${m.id}/presentation`}
+            className={`flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest transition-colors hover:opacity-100 opacity-70 ${dark ? "text-blue-400" : "text-blue-600"}`}
+            title={isCS ? "Prezentace zápasu" : "Match presentation"}
+          >
+            <Presentation size={10} />
+            {isCS ? "Prezentace" : "Report"}
+          </a>
+          <a
+            href={`/${locale}/matches/${m.id}/scoreboard`}
+            className={`flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest transition-colors hover:opacity-100 opacity-70 ${dark ? "text-emerald-400" : "text-emerald-600"}`}
+            title={isCS ? "Scoreboard" : "Scoreboard"}
+          >
+            <LayoutGrid size={10} />
+            Scoreboard
+          </a>
         </div>
       </div>
     </div>

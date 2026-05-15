@@ -223,7 +223,7 @@ export async function PATCH(
   const session = await auth();
   if (!await canManageCompetition(session, id)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { homeScore, awayScore, status, scheduledAt, round, note } = await request.json();
+  const { homeScore, awayScore, status, scheduledAt, round, note, venue } = await request.json();
 
   const hasResult = homeScore !== undefined && awayScore !== undefined
     && homeScore !== null && awayScore !== null;
@@ -256,6 +256,7 @@ export async function PATCH(
       ...(scheduledAt !== undefined && { scheduledAt: scheduledAt ? new Date(scheduledAt) : null }),
       ...(round !== undefined && { round: round ? Number(round) : null }),
       ...(note !== undefined && { note: note?.trim() || null }),
+      ...(venue !== undefined && { venue: venue?.trim() || null }),
       ...((hasResult || isMarkingPlayed) && status === "PLAYED" && { playedAt: new Date() }),
     },
     include: {

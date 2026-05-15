@@ -12,7 +12,23 @@ export async function GET(
 
   const match = await prisma.match.findUnique({
     where: { id },
-    include: {
+    select: {
+      id: true,
+      homeScore: true,
+      awayScore: true,
+      matchState: true,
+      period: true,
+      startedAt: true,
+      periodOffset: true,
+      homeTeamId: true,
+      awayTeamId: true,
+      homeTeamName: true,
+      awayTeamName: true,
+      competitionId: true,
+      homeFormation: true,
+      awayFormation: true,
+      homeLineupPositions: true,
+      awayLineupPositions: true,
       homeTeam: { select: { id: true, name: true, logoUrl: true } },
       awayTeam: { select: { id: true, name: true, logoUrl: true } },
       events: { orderBy: { createdAt: "asc" } },
@@ -126,7 +142,32 @@ export async function GET(
   homePlayers = applySubstitutions(homePlayers, "HOME");
   awayPlayers = applySubstitutions(awayPlayers, "AWAY");
 
-  return NextResponse.json({ ...match, homePlayers, awayPlayers, eventTypes }, {
+  // Get formations and positions from match
+  const formations = {
+    home: match.homeFormation ?? null,
+    away: match.awayFormation ?? null,
+  };
+  
+  const enrichPositions = (positions: Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}> | null, players: RosterPlayer[]) => {
+    if (!positions) return [];
+    const playerMap = new Map(players.map(p => [p.id, p]));
+    return positions.map((p) => {
+      const playerId = p.playerId ?? p.guestPlayerId;
+      const player = playerId ? playerMap.get(playerId) : null;
+      return {
+        ...p,
+        name: player?.name ?? "",
+        number: player?.number ?? null,
+      };
+    });
+  };
+
+  const positions = {
+    home: enrichPositions(match.homeLineupPositions as Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}>, homePlayers),
+    away: enrichPositions(match.awayLineupPositions as Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}>, awayPlayers),
+  };
+
+  return NextResponse.json({ ...match, homePlayers, awayPlayers, eventTypes, formations, positions }, {
     headers: { "Cache-Control": "no-store" },
   });
 }

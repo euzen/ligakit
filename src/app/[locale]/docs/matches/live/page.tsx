@@ -61,6 +61,54 @@ export default async function LivePage({
           ? "Dostupné typy událostí závisí na sportu a jeho konfiguraci. Příklady pro fotbal: gól, vlastní gól, žlutá karta, červená karta, střídání. Každá událost je uložena s časovou značkou (minuta zápasu)."
           : "Available event types depend on the sport and its configuration. Football examples: goal, own goal, yellow card, red card, substitution. Each event is saved with a timestamp (match minute)."}
       </p>
+
+      <h2>{cs ? "Prezentace zápasu" : "Match Presentation"}</h2>
+      <p>
+        {cs
+          ? "Prezentace je stránka pro zobrazení zápasu s rozšířenými informacemi — skóre, sestavy, časomíra a události. Podporuje světlý i tmavý režim, automaticky se obnovuje každých 10 sekund (živý přenos) a obsahuje tlačítka pro sdílení a tisk do PDF."
+          : "The match presentation page displays comprehensive match information — score, lineups, timer, and events. It supports light and dark mode, auto-refreshes every 10 seconds (live broadcast), and includes share and PDF print buttons."}
+      </p>
+      <ul>
+        {cs ? (
+          <>
+            <li><strong>Světlý/Tmavý mód</strong> — přepínání mezi světlým a tmavým motivem</li>
+            <li><strong>Sestavy</strong> — vizualizace taktických sestav s možností rozbalení/sbalení</li>
+            <li><strong>Živý přenos</strong> — auto-refresh dat každých 10 sekund</li>
+            <li><strong>Časomíra</strong> — zobrazení aktuálního času zápasu (pro LIVE zápasy)</li>
+            <li><strong>Sdílení</strong> — Web Share API nebo kopírování URL</li>
+            <li><strong>PDF</strong> — tlačítko pro tisk/export do PDF</li>
+          </>
+        ) : (
+          <>
+            <li><strong>Light/Dark Mode</strong> — toggle between light and dark themes</li>
+            <li><strong>Lineups</strong> — tactical formation visualization with expand/collapse</li>
+            <li><strong>Live Broadcast</strong> — auto-refresh data every 10 seconds</li>
+            <li><strong>Match Timer</strong> — displays current match time (for LIVE matches)</li>
+            <li><strong>Share</strong> — Web Share API or copy URL</li>
+            <li><strong>PDF</strong> — print/export to PDF button</li>
+          </>
+        )}
+      </ul>
+
+      <h2>{cs ? "Odkazy v seznamech zápasů" : "Links in Match Lists"}</h2>
+      <p>
+        {cs
+          ? "V seznamech zápasů (soutěž, rozpis, tým) najdeš u každého zápasu odkazy na:"
+          : "In match lists (competition, schedule, team) you will find links for each match to:"}
+      </p>
+      <ul>
+        {cs ? (
+          <>
+            <li><strong>Prezentace</strong> — modrý odkaz s ikonou dokumentu</li>
+            <li><strong>Scoreboard</strong> — zelený odkaz s ikonou mřížky</li>
+          </>
+        ) : (
+          <>
+            <li><strong>Presentation</strong> — blue link with document icon</li>
+            <li><strong>Scoreboard</strong> — green link with grid icon</li>
+          </>
+        )}
+      </ul>
     </article>
   );
 }

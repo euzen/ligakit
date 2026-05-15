@@ -305,6 +305,38 @@
     "myTeamIn": "Your team is registered",
     "removeTeamConfirm": "Really remove team from competition?"
   },
+  "presentation": {
+    "title": "Match Report",
+    "share": "Share",
+    "pdf": "PDF",
+    "finalScore": "Final Score",
+    "liveScore": "Current Score",
+    "matchTime": "Time",
+    "lineups": "Lineups",
+    "showLineups": "Show Lineups",
+    "hideLineups": "Hide Lineups",
+    "matchEvents": "Match Events",
+    "noEvents": "No events yet",
+    "matchInfo": "Match Information",
+    "venue": "Venue",
+    "referee": "Referee",
+    "date": "Date",
+    "generatedBy": "Generated with LIGAKIT",
+    "unknownFormation": "Unknown formation",
+    "notSet": "Formation not set",
+    "home": "Home",
+    "away": "Away",
+    "goal": "Goal",
+    "substitution": "Substitution",
+    "card": "Card",
+    "unknownEvent": "Event",
+    "linkCopied": "Link copied to clipboard!",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "toggle": "Toggle Theme"
+    }
+  },
   "errors": {
     "unexpected": "An unexpected error occurred",
     "notFound": "Page not found",

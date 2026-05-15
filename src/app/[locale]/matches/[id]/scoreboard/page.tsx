@@ -24,6 +24,14 @@ interface EventType {
   icon: string | null;
 }
 
+interface PositionInfo {
+  positionIndex: number;
+  playerId?: string;
+  guestPlayerId?: string;
+  name: string;
+  number: number | null;
+}
+
 interface LiveMatch {
   id: string;
   homeScore: number | null;
@@ -39,6 +47,8 @@ interface LiveMatch {
   periodOffset: number | null;
   competition: { name: string };
   eventTypes: EventType[];
+  formations: { home: string | null; away: string | null };
+  positions: { home: PositionInfo[]; away: PositionInfo[] };
 }
 
 const PERIOD_LABELS: Record<number, string> = {
