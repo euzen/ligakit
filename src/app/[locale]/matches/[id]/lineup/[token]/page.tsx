@@ -66,7 +66,8 @@ export default function LineupTokenPage() {
     }
 
     const live = await liveRes.json();
-    const lineupData: MatchPlayerRecord[] = await lineupRes.json();
+    const lineupJson = await lineupRes.json();
+    const lineupData: MatchPlayerRecord[] = lineupJson.players ?? [];
 
     setMatchState(live.matchState);
 
