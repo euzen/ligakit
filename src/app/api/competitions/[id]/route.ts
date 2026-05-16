@@ -8,7 +8,12 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   const competition = await prisma.competition.findUnique({
     where: { id },
     include: {
-      sport: { select: { id: true, name: true, icon: true } },
+      sport: {
+        select: {
+          id: true, name: true, icon: true,
+          eventTypes: { select: { name: true, affectsScore: true } },
+        },
+      },
       organizer: { select: { id: true, name: true, email: true } },
       teams: {
         orderBy: { joinedAt: "asc" },
@@ -19,12 +24,40 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
         include: {
           homeTeam: { select: { id: true, name: true, logoUrl: true } },
           awayTeam: { select: { id: true, name: true, logoUrl: true } },
+          events: { select: { type: true, teamSide: true } },
         },
       },
     },
   });
   if (!competition) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
-  return NextResponse.json(competition);
+
+  const eventTypes = competition.sport?.eventTypes ?? [];
+
+  // Recalculate scores dynamically from events for all matches
+  const matchesWithScore = competition.matches.map((m) => {
+    let homeScore = 0;
+    let awayScore = 0;
+    for (const e of m.events) {
+      const et = eventTypes.find((t) => t.name === e.type);
+      const scores = et?.affectsScore || e.type === "GOAL" || e.type === "OWN_GOAL";
+      if (!scores) continue;
+      if (e.type === "OWN_GOAL") {
+        if (e.teamSide === "HOME") awayScore++; else homeScore++;
+      } else {
+        if (e.teamSide === "HOME") homeScore++; else awayScore++;
+      }
+    }
+    // If no events recorded yet, fall back to stored DB value
+    const hasEvents = m.events.length > 0;
+    return {
+      ...m,
+      events: undefined,
+      homeScore: hasEvents ? homeScore : m.homeScore,
+      awayScore: hasEvents ? awayScore : m.awayScore,
+    };
+  });
+
+  return NextResponse.json({ ...competition, matches: matchesWithScore });
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

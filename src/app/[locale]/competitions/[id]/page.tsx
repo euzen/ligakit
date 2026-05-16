@@ -36,7 +36,12 @@ export default async function CompetitionDetailPage({
   const competition = await prisma.competition.findUnique({
     where: { id },
     include: {
-      sport: { select: { id: true, name: true, icon: true } },
+      sport: {
+        select: {
+          id: true, name: true, icon: true,
+          eventTypes: { select: { name: true, affectsScore: true } },
+        },
+      },
       organizer: { select: { id: true, name: true, email: true } },
       teams: {
         orderBy: { joinedAt: "asc" },
@@ -47,6 +52,7 @@ export default async function CompetitionDetailPage({
         include: {
           homeTeam: { select: { id: true, name: true, logoUrl: true } },
           awayTeam: { select: { id: true, name: true, logoUrl: true } },
+          events: { select: { type: true, teamSide: true } },
         },
       },
     },
@@ -59,6 +65,31 @@ export default async function CompetitionDetailPage({
   const canManage = isAdmin || isOrganizer;
 
   if (!competition.isPublic && !canManage) notFound();
+
+  // Recalculate scores from events
+  const sportEventTypes = competition.sport?.eventTypes ?? [];
+  const matchesWithScore = competition.matches.map((m) => {
+    let homeScore = 0;
+    let awayScore = 0;
+    for (const e of m.events) {
+      const et = sportEventTypes.find((t) => t.name === e.type);
+      const scores = et?.affectsScore || e.type === "GOAL" || e.type === "OWN_GOAL";
+      if (!scores) continue;
+      if (e.type === "OWN_GOAL") {
+        if (e.teamSide === "HOME") awayScore++; else homeScore++;
+      } else {
+        if (e.teamSide === "HOME") homeScore++; else awayScore++;
+      }
+    }
+    const hasEvents = m.events.length > 0;
+    return {
+      ...m,
+      homeScore: hasEvents ? homeScore : m.homeScore,
+      awayScore: hasEvents ? awayScore : m.awayScore,
+    };
+  });
+  // Replace matches with recalculated scores
+  const competitionWithScore = { ...competition, matches: matchesWithScore };
 
   const [allTeams, myTeams, matchEvents, rosterPlayers] = await Promise.all([
     canManage ? prisma.team.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, logoUrl: true } }) : Promise.resolve([]),
@@ -112,22 +143,22 @@ export default async function CompetitionDetailPage({
     }
   }
 
-  const teamsForStandings = competition.teams.map((ct) => ({
+  const teamsForStandings = competitionWithScore.teams.map((ct) => ({
     team: ct.team ?? { id: ct.guestName ?? ct.id, name: ct.guestName ?? "?", logoUrl: null },
   }));
 
-  const standings = competition.type === "LEAGUE"
-    ? computeStandings(teamsForStandings, competition.matches)
+  const standings = competitionWithScore.type === "LEAGUE"
+    ? computeStandings(teamsForStandings, competitionWithScore.matches)
     : null;
 
-  const groupStandings = competition.type === "CUP"
-    ? computeGroupStandings(teamsForStandings, competition.matches)
+  const groupStandings = competitionWithScore.type === "CUP"
+    ? computeGroupStandings(teamsForStandings, competitionWithScore.matches)
     : null;
 
   const matchTeams = competition.teams.filter((ct) => ct.team !== null).map((ct) => ct.team!);
   const guestTeamNames = competition.teams.filter((ct) => ct.team === null && ct.guestName).map((ct) => ct.guestName!);
 
-  const exportMatches = competition.matches.map((m) => ({
+  const exportMatches = competitionWithScore.matches.map((m) => ({
     round: m.round, note: m.note,
     homeTeamName: m.homeTeam?.name ?? m.homeTeamName ?? "?",
     awayTeamName: m.awayTeam?.name ?? m.awayTeamName ?? "?",
@@ -136,7 +167,7 @@ export default async function CompetitionDetailPage({
   }));
   const exportStandings = standings ? standings.map((row, i) => ({ pos: i + 1, ...row })) : null;
 
-  const playedMatches = competition.matches.filter((m) => m.status === "PLAYED");
+  const playedMatches = competitionWithScore.matches.filter((m) => m.status === "PLAYED");
   const totalGoals = playedMatches.reduce((s, m) => s + (m.homeScore ?? 0) + (m.awayScore ?? 0), 0);
 
   // ── Competition statistics ──────────────────────────────────────────────
@@ -144,7 +175,7 @@ export default async function CompetitionDetailPage({
   const scorerMap = new Map<string, { name: string; teamName: string; goals: number }>();
   for (const ev of matchEvents) {
     if (ev.type !== "GOAL" || !ev.playerName) continue;
-    const match = competition.matches.find((m) => m.id === ev.matchId);
+    const match = competitionWithScore.matches.find((m) => m.id === ev.matchId);
     if (!match) continue;
     const teamName = ev.teamSide === "HOME"
       ? (match.homeTeam?.name ?? match.homeTeamName ?? "?")
@@ -161,17 +192,17 @@ export default async function CompetitionDetailPage({
   const cardMap = new Map<string, { name: string; teamName: string; yellow: number; red: number }>();
   for (const ev of matchEvents) {
     if ((ev.type !== "YELLOW_CARD" && ev.type !== "RED_CARD") || !ev.playerName) continue;
-    const match = competition.matches.find((m) => m.id === ev.matchId);
+    const match = competitionWithScore.matches.find((m) => m.id === ev.matchId);
     if (!match) continue;
     const teamName = ev.teamSide === "HOME"
       ? (match.homeTeam?.name ?? match.homeTeamName ?? "?")
       : (match.awayTeam?.name ?? match.awayTeamName ?? "?");
     const key = `${ev.playerName}__${teamName}`;
-    const existing = cardMap.get(key) ?? { name: ev.playerName, teamName, yellow: 0, red: 0 };
+    const existing2 = cardMap.get(key) ?? { name: ev.playerName, teamName, yellow: 0, red: 0 };
     cardMap.set(key, {
-      ...existing,
-      yellow: existing.yellow + (ev.type === "YELLOW_CARD" ? 1 : 0),
-      red: existing.red + (ev.type === "RED_CARD" ? 1 : 0),
+      ...existing2,
+      yellow: existing2.yellow + (ev.type === "YELLOW_CARD" ? 1 : 0),
+      red: existing2.red + (ev.type === "RED_CARD" ? 1 : 0),
     });
   }
   const topCards = [...cardMap.values()]
@@ -201,7 +232,7 @@ export default async function CompetitionDetailPage({
   // Top scorer for stat card
   const topScorerName = topScorers[0] ? `${topScorers[0].name} (${topScorers[0].goals})` : null;
 
-  const liveMatches = competition.matches
+  const liveMatches = competitionWithScore.matches
     .filter((m) => (m as { matchState?: string | null }).matchState === "LIVE")
     .map((m) => ({
       id: m.id,
@@ -234,7 +265,7 @@ export default async function CompetitionDetailPage({
         {canManage ? (
           <CompetitionMatchesManager
             competitionId={id}
-            initialMatches={competition.matches as Parameters<typeof CompetitionMatchesManager>[0]["initialMatches"]}
+            initialMatches={competitionWithScore.matches as Parameters<typeof CompetitionMatchesManager>[0]["initialMatches"]}
             teams={matchTeams}
             guestTeamNames={guestTeamNames}
             canManage={canManage}
@@ -243,7 +274,7 @@ export default async function CompetitionDetailPage({
           />
         ) : (
           <MatchSchedule
-            matches={competition.matches as Parameters<typeof MatchSchedule>[0]["matches"]}
+            matches={competitionWithScore.matches as Parameters<typeof MatchSchedule>[0]["matches"]}
             locale={locale}
           />
         )}
@@ -283,7 +314,7 @@ export default async function CompetitionDetailPage({
       </CardHeader>
       <CardContent>
         <TournamentBracket
-          matches={competition.matches as Parameters<typeof TournamentBracket>[0]["matches"]}
+          matches={competitionWithScore.matches as Parameters<typeof TournamentBracket>[0]["matches"]}
           locale={locale}
         />
       </CardContent>

@@ -236,16 +236,44 @@ export async function PATCH(
     : undefined;
 
   const isMarkingPlayed = status === "PLAYED";
-  const existing = isMarkingPlayed
-    ? await prisma.match.findUnique({ where: { id: matchId }, select: { homeScore: true, awayScore: true } })
-    : null;
 
-  const finalHomeScore = isMarkingPlayed && (effectiveHomeScore === null || (effectiveHomeScore === undefined && existing?.homeScore === null))
-    ? 0
-    : effectiveHomeScore;
-  const finalAwayScore = isMarkingPlayed && (effectiveAwayScore === null || (effectiveAwayScore === undefined && existing?.awayScore === null))
-    ? 0
-    : effectiveAwayScore;
+  // When marking as PLAYED, recalculate score from events if not manually provided
+  let finalHomeScore = effectiveHomeScore;
+  let finalAwayScore = effectiveAwayScore;
+
+  if (isMarkingPlayed && (effectiveHomeScore === undefined || effectiveHomeScore === null) && (effectiveAwayScore === undefined || effectiveAwayScore === null)) {
+    // Recalculate from events
+    const [events, sport] = await Promise.all([
+      prisma.matchEvent.findMany({ where: { matchId } }),
+      prisma.match.findUnique({
+        where: { id: matchId },
+        select: {
+          competition: {
+            select: { sport: { select: { eventTypes: { select: { name: true, affectsScore: true } } } } },
+          },
+        },
+      }),
+    ]);
+    const eventTypes = sport?.competition?.sport?.eventTypes ?? [];
+    let calcHome = 0;
+    let calcAway = 0;
+    for (const e of events) {
+      const et = eventTypes.find((t) => t.name === e.type);
+      const scores = et?.affectsScore || e.type === "GOAL" || e.type === "OWN_GOAL";
+      if (!scores) continue;
+      if (e.type === "OWN_GOAL") {
+        if (e.teamSide === "HOME") calcAway++; else calcHome++;
+      } else {
+        if (e.teamSide === "HOME") calcHome++; else calcAway++;
+      }
+    }
+    finalHomeScore = calcHome;
+    finalAwayScore = calcAway;
+  } else if (isMarkingPlayed) {
+    // Manually provided score — keep it, default null to 0
+    if (finalHomeScore === null || finalHomeScore === undefined) finalHomeScore = 0;
+    if (finalAwayScore === null || finalAwayScore === undefined) finalAwayScore = 0;
+  }
 
   const match = await prisma.match.update({
     where: { id: matchId },
