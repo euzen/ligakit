@@ -54,6 +54,25 @@ export async function GET(
 
   if (!match) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
 
+  // Calculate score dynamically from events
+  // OWN_GOAL: scored by team X → counts for the OTHER team
+  let homeScore = 0;
+  let awayScore = 0;
+  for (const e of match.events) {
+    const et = match.competition?.sport?.eventTypes?.find((t) => t.name === e.type);
+    const scores = et?.affectsScore || e.type === "OWN_GOAL" || e.type === "GOAL";
+    if (!scores) continue;
+    const isOwnGoal = e.type === "OWN_GOAL";
+    if (isOwnGoal) {
+      // Own goal counts for the opposing team
+      if (e.teamSide === "HOME") awayScore++;
+      else homeScore++;
+    } else {
+      if (e.teamSide === "HOME") homeScore++;
+      else awayScore++;
+    }
+  }
+
   const sport = match.competition?.sport;
   const config = parseSportConfig(sport?.config);
   const engine = getEngine(config.engine);
@@ -167,7 +186,16 @@ export async function GET(
     away: enrichPositions(match.awayLineupPositions as Array<{playerId?: string; guestPlayerId?: string; positionIndex: number}>, awayPlayers),
   };
 
-  return NextResponse.json({ ...match, homePlayers, awayPlayers, eventTypes, formations, positions }, {
+  return NextResponse.json({ 
+    ...match, 
+    homeScore, 
+    awayScore, 
+    homePlayers, 
+    awayPlayers, 
+    eventTypes, 
+    formations, 
+    positions 
+  }, {
     headers: { "Cache-Control": "no-store" },
   });
 }

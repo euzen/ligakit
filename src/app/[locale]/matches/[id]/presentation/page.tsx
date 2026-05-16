@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Trophy, Share2, Download, Calendar, MapPin, User, ChevronDown, ChevronUp, Sun, Moon, Timer } from "lucide-react";
+import { Trophy, Share2, Download, ChevronDown, ChevronUp, Sun, Moon, Timer } from "lucide-react";
 import { TacticalPitch } from "@/components/tactical/tactical-pitch";
 import { getFormation } from "@/lib/formations";
 
@@ -52,6 +52,8 @@ interface LiveMatch {
   eventTypes: EventType[];
   formations: { home: string | null; away: string | null };
   positions: { home: PositionInfo[]; away: PositionInfo[] };
+  venue: string | null;
+  referee: string | null;
 }
 
 export default function MatchPresentationPage() {
@@ -469,26 +471,6 @@ export default function MatchPresentationPage() {
             </div>
           </section>
         )}
-
-        {/* Match Info */}
-        <section className={`${cardClasses} rounded-2xl border p-6`}>
-          <div className={`flex flex-wrap items-center justify-center gap-6 text-sm ${subtextClasses}`}>
-            {match.startedAt && (
-              <div className="flex items-center gap-2">
-                <Calendar size={16} />
-                <span>{new Date(match.startedAt).toLocaleDateString(locale === "cs" ? "cs-CZ" : "en-US", { day: "numeric", month: "long", year: "numeric" })}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <MapPin size={16} />
-              <span>{t("venue")}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <User size={16} />
-              <span>{t("referee")}</span>
-            </div>
-          </div>
-        </section>
 
         {/* Footer */}
         <footer className={`text-center text-sm pt-4 ${subtextClasses}`}>
